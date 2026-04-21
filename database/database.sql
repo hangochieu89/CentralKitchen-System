@@ -154,9 +154,12 @@ INSERT INTO Stores (name, address, phone, type) VALUES
 INSERT INTO Users (username, password_hash, full_name, email, role, store_id) VALUES
                                                                                   ('admin',       '$2a$10$examplehash1', N'Nguyễn Admin',    'admin@ck.vn',       'ADMIN',              NULL),
                                                                                   ('manager1',    '$2a$10$examplehash2', N'Trần Manager',    'manager@ck.vn',     'MANAGER',            NULL),
-                                                                                  ('coord1',      '$2a$10$examplehash3', N'Lê Điều Phối',   'coord@ck.vn',       'SUPPLY_COORDINATOR', 1),
+                                                                                  ('coord1',      '$2a$10$examplehash3', N'Lê Điều Phối 1',   'coord1@ck.vn',       'SUPPLY_COORDINATOR', 1),
+                                                                                  ('coord2',      '$2a$10$examplehash6', N'Hoàng Điều Phối 2',   'coord2@ck.vn',       'SUPPLY_COORDINATOR', 1),
                                                                                   ('kitchen1',    '$2a$10$examplehash4', N'Phạm Bếp',       'kitchen@ck.vn',     'KITCHEN_STAFF',      1),
-                                                                                  ('store_q2',    '$2a$10$examplehash5', N'Hoàng Cửa Hàng', 'storeq2@ck.vn',    'STORE_STAFF',        2);
+                                                                                  ('kitchen2',    '$2a$10$examplehash7', N'Tạ Bếp Trợ',     'kitchen2@ck.vn',    'KITCHEN_STAFF',      1),
+                                                                                  ('store_q2',    '$2a$10$examplehash5', N'Hoàng Cửa Hàng', 'storeq2@ck.vn',    'STORE_STAFF',        2),
+                                                                                  ('store_bt',    '$2a$10$examplehash8', N'Vũ Cửa Hàng BT',  'storebt@ck.vn',    'STORE_STAFF',        3);
 
 -- Sản phẩm
 INSERT INTO Products (name, category, unit, standard_quantity) VALUES
@@ -170,3 +173,45 @@ INSERT INTO Inventory (store_id, product_id, quantity, min_threshold) VALUES
                                                                           (1, 1, 100, 20), (1, 2, 50, 10), (1, 3, 30, 5), (1, 4, 0, 0),
                                                                           (2, 1, 5,   10), (2, 2, 3,  5),  (2, 4, 20, 10),
                                                                           (3, 1, 8,   10), (3, 4, 15, 10);
+
+-- ============================================================
+-- DỮ LIỆU MẫU SUPPLY COORDINATOR (Testing Data)
+-- ============================================================
+
+-- Đơn hàng từ các cửa hàng franchise
+INSERT INTO Orders (store_id, created_by, order_date, delivery_date, status, note) VALUES
+                                                                                       (2, 7, GETDATE()-2, GETDATE()+1, 'PENDING', N'Đơn khẩn, cần giao sáng'),
+                                                                                       (2, 7, GETDATE()-1, GETDATE()+2, 'PENDING', N'Đặt hàng định kỳ thứ 2'),
+                                                                                       (3, 8, GETDATE()-3, GETDATE(), 'CONFIRMED', N'Đã xác nhận'),
+                                                                                       (2, 7, GETDATE()-5, DATEADD(day, -1, GETDATE()), 'IN_PRODUCTION', N'Đang sản xuất'),
+                                                                                       (3, 8, GETDATE()-4, DATEADD(day, -2, GETDATE()), 'READY', N'Đã sẵn sàng giao');
+
+-- Chi tiết đơn hàng (Order Items)
+INSERT INTO OrderItems (order_id, product_id, quantity_requested, quantity_delivered) VALUES
+                                                                                          (1, 1, 25, 0),
+                                                                                          (1, 2, 10, 0),
+                                                                                          (1, 4, 100, 0),
+                                                                                          (2, 1, 15, 0),
+                                                                                          (2, 3, 5, 0),
+                                                                                          (2, 4, 50, 0),
+                                                                                          (3, 1, 30, 0),
+                                                                                          (3, 2, 20, 0),
+                                                                                          (3, 4, 150, 0),
+                                                                                          (4, 1, 20, 20),
+                                                                                          (4, 2, 15, 15),
+                                                                                          (5, 1, 25, 25),
+                                                                                          (5, 4, 80, 80);
+
+-- Kế hoạch sản xuất
+INSERT INTO ProductionPlans (order_id, assigned_to, planned_date, status, note) VALUES
+                                                                                    (1, 5, DATEADD(hour, 8, GETDATE()), 'PENDING', N'Chưa bắt đầu'),
+                                                                                    (2, 5, DATEADD(hour, 12, GETDATE()), 'PENDING', N'Chờ xác nhận'),
+                                                                                    (3, 5, DATEADD(hour, 4, GETDATE()), 'COMPLETED', N'Hoàn thành sản xuất'),
+                                                                                    (4, 5, DATEADD(day, -1, GETDATE()), 'COMPLETED', N'Đã hoàn thành'),
+                                                                                    (5, 6, DATEADD(day, -2, GETDATE()), 'COMPLETED', N'Sản xuất xong');
+
+-- Giao hàng (Deliveries)
+INSERT INTO Deliveries (order_id, coordinator_id, scheduled_at, actual_at, status, note) VALUES
+                                                                                             (3, 3, GETDATE(), NULL, 'SCHEDULED', N'Chờ giao'),
+                                                                                             (4, 3, DATEADD(day, -1, GETDATE()), DATEADD(day, -1, GETDATE()), 'DELIVERED', N'Đã giao thành công'),
+                                                                                             (5, 3, DATEADD(day, -2, GETDATE()), DATEADD(day, -2, GETDATE()), 'DELIVERED', N'Giao thành công');

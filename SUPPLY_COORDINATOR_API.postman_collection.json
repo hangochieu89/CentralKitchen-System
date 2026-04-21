@@ -1,0 +1,268 @@
+{
+  "info": {
+    "name": "Central Kitchen - Supply Coordinator API",
+    "description": "Collection of API endpoints for Supply Coordinator module",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "📋 Order Management",
+      "item": [
+        {
+          "name": "1.1 Get All Pending Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/orders/pending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "orders", "pending"]
+            },
+            "description": "Lấy tất cả đơn hàng chờ xử lý (status = PENDING)"
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Get Orders by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/orders/status/PENDING",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "orders", "status", "PENDING"]
+            },
+            "description": "Lấy đơn hàng theo trạng thái cụ thể"
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Get Orders by Date Range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/orders/date-range?startDate=2024-04-01T00:00:00&endDate=2024-04-30T23:59:59",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "orders", "date-range"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-04-01T00:00:00"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-04-30T23:59:59"
+                }
+              ]
+            },
+            "description": "Lấy đơn hàng trong khoảng thời gian"
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 Get Orders by Store",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/orders/store/2",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "orders", "store", "2"]
+            },
+            "description": "Lấy đơn hàng của một cửa hàng cụ thể"
+          },
+          "response": []
+        },
+        {
+          "name": "1.5 Confirm Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/orders/1/confirm",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "orders", "1", "confirm"]
+            },
+            "description": "Xác nhận đơn hàng (PENDING → CONFIRMED)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🚚 Delivery Management",
+      "item": [
+        {
+          "name": "2.1 Schedule Delivery",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 3,\n  \"coordinatorId\": 3,\n  \"scheduledAt\": \"2024-04-15T08:30:00\",\n  \"note\": \"Giao sáng, cần xác nhận trước\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/deliveries/schedule",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "deliveries", "schedule"]
+            },
+            "description": "Lập lịch giao hàng mới"
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Update Delivery Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deliveryId\": 1,\n  \"status\": \"DELIVERED\",\n  \"actualAt\": \"2024-04-15T08:45:00\",\n  \"note\": \"Giao thành công, khách đã ký nhận\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/deliveries/update-status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "deliveries", "update-status"]
+            },
+            "description": "Cập nhật trạng thái giao hàng"
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 Get Coordinator Deliveries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/deliveries/coordinator/3",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "deliveries", "coordinator", "3"]
+            },
+            "description": "Lấy tất cả giao hàng của một coordinator"
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 Get Deliveries by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/deliveries/status/DELIVERED",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "deliveries", "status", "DELIVERED"]
+            },
+            "description": "Lấy giao hàng theo trạng thái"
+          },
+          "response": []
+        },
+        {
+          "name": "2.5 Get Overdue Deliveries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/deliveries/overdue",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "deliveries", "overdue"]
+            },
+            "description": "Lấy các giao hàng quá hạn (chưa giao nhưng vượt thời gian scheduled)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "⚠️ Issue Handling",
+      "item": [
+        {
+          "name": "3.1 Cancel Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/orders/1/cancel?reason=Khách hủy đơn",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "orders", "1", "cancel"],
+              "query": [
+                {
+                  "key": "reason",
+                  "value": "Khách hủy đơn"
+                }
+              ]
+            },
+            "description": "Hủy đơn hàng và lưu lý do"
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 Mark Delivery as Failed",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/deliveries/1/failed?reason=Địa chỉ sai, không giao được",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "deliveries", "1", "failed"],
+              "query": [
+                {
+                  "key": "reason",
+                  "value": "Địa chỉ sai, không giao được"
+                }
+              ]
+            },
+            "description": "Đánh dấu giao hàng thất bại và lưu lý do"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📊 Statistics & Reports",
+      "item": [
+        {
+          "name": "4.1 Get Production Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/supply-coordinator/production-stats?startDate=2024-04-01T00:00:00&endDate=2024-04-30T23:59:59",
+              "host": ["{{base_url}}"],
+              "path": ["api", "supply-coordinator", "production-stats"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-04-01T00:00:00"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-04-30T23:59:59"
+                }
+              ]
+            },
+            "description": "Lấy thống kê sản xuất trong khoảng thời gian"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ]
+}
