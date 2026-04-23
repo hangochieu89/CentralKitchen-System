@@ -1,0 +1,178 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Kitchen System - Dashboard Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e05c2a;
+            --primary-hover: #c44e20;
+            --bg: #f9fafb;
+            --text: #1f2937;
+            --border: #e5e7eb;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 15px;
+        }
+
+        .role-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .role-card {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            background: #fdf2f0;
+            border: 1px solid #ffd9cc;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .role-card:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(224, 92, 42, 0.2);
+        }
+
+        .role-card .icon {
+            font-size: 24px;
+            margin-right: 16px;
+        }
+
+        .role-card .info {
+            flex: 1;
+        }
+
+        .role-card .info span {
+            display: block;
+            font-size: 16px;
+        }
+
+        .role-card .info small {
+            display: block;
+            font-size: 13px;
+            opacity: 0.8;
+            margin-top: 4px;
+            font-weight: 400;
+        }
+        
+        .role-card:hover .info small {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .not-ready {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .not-ready:hover {
+            background: #fdf2f0;
+            color: var(--text);
+            transform: none;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🍳 Central Kitchen System</h1>
+        <p class="subtitle">Chọn phân hệ để truy cập</p>
+
+        <div class="role-list">
+            <!-- 1. Điều phối cung ứng -->
+            <a href="${pageContext.request.contextPath}/supply-coordinator/index.html" class="role-card not-ready" title="Đang phát triển">
+                <span class="icon">📦</span>
+                <div class="info">
+                    <span>Supply Coordinator</span>
+                    <small>Điều phối cung ứng (Đang phát triển)</small>
+                </div>
+            </a>
+
+            <!-- 2. Quản lý vận hành -->
+            <a href="${pageContext.request.contextPath}/manager-admin/index.html" class="role-card">
+                <span class="icon">📈</span>
+                <div class="info">
+                    <span>Manager</span>
+                    <small>Quản lý vận hành</small>
+                </div>
+            </a>
+
+            <!-- 3. Bếp trung tâm -->
+            <a href="${pageContext.request.contextPath}/kitchen-staff/index.jsp" class="role-card">
+                <span class="icon">👨‍🍳</span>
+                <div class="info">
+                    <span>Central Kitchen Staff</span>
+                    <small>Nhân viên bếp trung tâm</small>
+                </div>
+            </a>
+
+            <!-- 4. Quản trị hệ thống -->
+            <a href="${pageContext.request.contextPath}/admin/index.html" class="role-card not-ready" title="Đang phát triển">
+                <span class="icon">⚙️</span>
+                <div class="info">
+                    <span>Admin</span>
+                    <small>Quản trị hệ thống (Đang phát triển)</small>
+                </div>
+            </a>
+
+            <!-- 5. Nhân viên cửa hàng -->
+            <a href="${pageContext.request.contextPath}/store-staff/index.html" class="role-card">
+                <span class="icon">🏪</span>
+                <div class="info">
+                    <span>Franchise Store Staff</span>
+                    <small>Nhân viên cửa hàng</small>
+                </div>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
