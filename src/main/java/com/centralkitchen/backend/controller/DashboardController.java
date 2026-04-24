@@ -15,4 +15,10 @@ public class DashboardController {
     public String dashboard() {
         return "redirect:/dashboard/index.jsp";
     }
+
+    @GetMapping("/store-staff")
+    public String storeStaff() {
+        return "redirect:/store-staff/index.html";
+    }
+    
 }

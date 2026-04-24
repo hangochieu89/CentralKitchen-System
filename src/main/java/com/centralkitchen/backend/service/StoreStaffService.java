@@ -1,6 +1,8 @@
 package com.centralkitchen.backend.service;
 
+import com.centralkitchen.backend.dto.OrderItemDTO;
 import com.centralkitchen.backend.dto.OrderRequest;
+import com.centralkitchen.backend.dto.OrderSummaryDTO;
 import com.centralkitchen.backend.entity.*;
 import com.centralkitchen.backend.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -62,4 +65,36 @@ public class StoreStaffService {
     public QualityFeedback submitFeedback(QualityFeedback feedback) {
         return feedbackRepository.save(feedback);
     }
+
+    // Lấy danh sách tất cả sản phẩm để hiển thị trong form đặt hàng
+    public List<Product> getAllProducts() {
+        return productRepository.findByIsActive(true);
+    }
+
+    // Lấy thông tin chi tiết một đơn hàng (bao gồm các món đã đặt)
+    public OrderSummaryDTO getOrderDetails(Integer orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        
+        List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
+        List<OrderItemDTO> itemDTOs = items.stream()
+                .map(item -> OrderItemDTO.builder()
+                        .id(item.getId())
+                        .productId(item.getProduct().getId())
+                        .productName(item.getProduct().getName())
+                        .productUnit(item.getProduct().getUnit())
+                        .quantity(item.getQuantityRequested())
+                        .build())
+                .collect(Collectors.toList());
+
+        return OrderSummaryDTO.builder()
+                .id(order.getId())
+                .storeName(order.getStore().getName())
+                .orderDate(order.getOrderDate())
+                .status(order.getStatus())
+                .items(itemDTOs)
+                .build();
+    }
+
+    
 }
