@@ -1,10 +1,608 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin — Central Kitchen</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+          --bg:#0f0f11;--bg2:#17171a;--bg3:#1e1e23;--bg4:#26262d;
+          --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+          --text:#f0f0f2;--text2:#9090a0;--text3:#5a5a6a;
+          --accent:#7c6dfa;--accent2:#9d91fb;--accent-bg:rgba(124,109,250,0.12);
+          --green:#3dd68c;--green-bg:rgba(61,214,140,0.1);
+          --amber:#f5a623;--amber-bg:rgba(245,166,35,0.1);
+          --red:#ff6b6b;--red-bg:rgba(255,107,107,0.1);
+          --blue:#5b9cf6;--blue-bg:rgba(91,156,246,0.1);
+          --teal:#2dd4bf;--teal-bg:rgba(45,212,191,0.1);
+          --r:10px;--rl:14px;--sw:230px;
+          --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;}
+        .sidebar{width:var(--sw);background:var(--bg2);border-right:1px solid var(--border);position:fixed;height:100vh;display:flex;flex-direction:column;z-index:10;}
+        .sb-brand{padding:22px 20px 18px;border-bottom:1px solid var(--border);}
+        .sb-icon{width:34px;height:34px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:10px;}
+        .sb-name{font-size:15px;font-weight:600;}
+        .sb-sub{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:0.8px;margin-top:2px;}
+        .nav-sec{padding:16px 12px 0;flex:1;}
+        .nav-lbl{font-size:10px;color:var(--text3);font-weight:500;letter-spacing:1px;text-transform:uppercase;padding:0 8px;margin-bottom:6px;}
+        .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13.5px;margin-bottom:2px;transition:all 0.15s;position:relative;}
+        .nav-item:hover{background:var(--bg3);color:var(--text);}
+        .nav-item.active{background:var(--accent-bg);color:var(--accent2);font-weight:500;}
+        .nav-item.active::before{content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--accent);border-radius:0 3px 3px 0;}
+        .sb-user{padding:14px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+        .sb-av{width:30px;height:30px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--accent2);}
+        .sb-uname{font-size:12px;font-weight:500;}
+        .sb-urole{font-size:10px;color:var(--text3);font-family:var(--mono);}
+        .main{margin-left:var(--sw);flex:1;padding:28px 28px 40px;}
+        .page{display:none;animation:fi 0.2s ease;}
+        .page.active{display:block;}
+        @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+        .ph{margin-bottom:24px;display:flex;align-items:flex-start;justify-content:space-between;}
+        .ph h1{font-size:22px;font-weight:600;}
+        .ph p{font-size:13px;color:var(--text3);margin-top:3px;}
+        .sg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+        .sc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px 20px;transition:border-color 0.2s;}
+        .sc:hover{border-color:var(--border2);}
+        .sc-icon{font-size:18px;margin-bottom:12px;}
+        .sc-lbl{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
+        .sc-val{font-size:30px;font-weight:600;font-family:var(--mono);}
+        .vp{color:var(--accent2)}.vg{color:var(--green)}.va{color:var(--amber)}.vb{color:var(--blue)}
+        .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;}
+        .card+.card{margin-top:16px;}
+        .ch{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+        .ch h3{font-size:14px;font-weight:600;}
+        .ca{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+        .sw{position:relative;}
+        .si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none;}
+        .sinp{padding:7px 12px 7px 30px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);outline:none;width:210px;font-family:var(--font);transition:border-color 0.15s;}
+        .sinp::placeholder{color:var(--text3);}
+        .sinp:focus{border-color:var(--accent);}
+        .fsel{padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text2);outline:none;cursor:pointer;font-family:var(--font);}
+        .fsel:focus{border-color:var(--accent);}
+        .btn{padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;font-family:var(--font);font-weight:500;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);transition:all 0.15s;white-space:nowrap;}
+        .btn:hover{background:var(--bg4);color:var(--text);}
+        .btn:active{transform:scale(0.97);}
+        .bp{background:var(--accent);color:#fff;border-color:var(--accent);}
+        .bp:hover{background:#6a5de8;color:#fff;}
+        .bd{background:var(--red-bg);color:var(--red);border-color:rgba(255,107,107,0.2);}
+        .bd:hover{background:rgba(255,107,107,0.18);}
+        .bs{padding:5px 10px;font-size:12px;border-radius:7px;}
+        .tw{overflow-x:auto;}
+        table{width:100%;border-collapse:collapse;}
+        th{font-size:11px;font-weight:500;color:var(--text3);text-align:left;padding:10px 20px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);white-space:nowrap;}
+        td{padding:13px 20px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text2);}
+        tr:last-child td{border-bottom:none;}
+        tr:hover td{background:var(--bg3);}
+        .tn{color:var(--text);font-weight:500;}
+        .tm{font-family:var(--mono);font-size:12px;}
+        .tda{display:flex;gap:6px;}
+        .av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
+        .tu{display:flex;align-items:center;gap:10px;}
+        .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
+        .ba{background:var(--accent-bg);color:var(--accent2);}
+        .bm{background:var(--green-bg);color:var(--green);}
+        .bc{background:var(--amber-bg);color:var(--amber);}
+        .bk{background:var(--red-bg);color:var(--red);}
+        .bst{background:var(--blue-bg);color:var(--blue);}
+        .bon{background:var(--green-bg);color:var(--green);}
+        .boff{background:var(--bg4);color:var(--text3);}
+        .bct{background:var(--accent-bg);color:var(--accent2);}
+        .bfr{background:var(--teal-bg);color:var(--teal);}
+        .pg{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--border);}
+        .pgi{font-size:12px;color:var(--text3);}
+        .pgb{display:flex;gap:4px;}
+        .pb{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);transition:all 0.15s;}
+        .pb:hover{background:var(--bg4);color:var(--text);}
+        .pb.act{background:var(--accent);color:#fff;border-color:var(--accent);}
+        .pb:disabled{opacity:0.3;cursor:not-allowed;}
+        .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center;}
+        .mo.open{display:flex;}
+        .mb{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);width:500px;max-width:95vw;animation:su 0.2s ease;}
+        @keyframes su{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+        .mh{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+        .mh h3{font-size:15px;font-weight:600;}
+        .mc{width:28px;height:28px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;color:var(--text3);font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+        .mc:hover{color:var(--text);background:var(--bg4);}
+        .mbody{padding:20px;}
+        .mf{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+        .fg{margin-bottom:14px;}
+        .fl{display:block;font-size:11px;font-weight:500;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;}
+        .fi{width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);outline:none;font-family:var(--font);transition:border-color 0.15s;}
+        .fi::placeholder{color:var(--text3);}
+        .fi:focus{border-color:var(--accent);}
+        .fr{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+        .co{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;}
+        .co.open{display:flex;}
+        .cb{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);width:340px;padding:24px;animation:su 0.18s ease;text-align:center;}
+        .ci{font-size:32px;margin-bottom:12px;}
+        .ct{font-size:15px;font-weight:600;margin-bottom:6px;}
+        .cm{font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.5;}
+        .cbb{display:flex;gap:8px;justify-content:center;}
+        .tc{position:fixed;bottom:24px;right:24px;z-index:300;display:flex;flex-direction:column;gap:8px;}
+        .toast{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:500;border:1px solid var(--border2);background:var(--bg2);animation:ti 0.25s ease;min-width:220px;}
+        @keyframes ti{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+        .toast.success{border-color:rgba(61,214,140,0.3);}
+        .toast.error{border-color:rgba(255,107,107,0.3);}
+        .td{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+        .toast.success .td{background:var(--green);}
+        .toast.error .td{background:var(--red);}
+        .es{text-align:center;padding:48px 20px;}
+        .ei{font-size:32px;margin-bottom:10px;opacity:0.3;}
+        .et{font-size:13px;color:var(--text3);}
+        .ld{text-align:center;padding:40px;color:var(--text3);font-size:13px;}
+        .sp{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 10px;}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        ::-webkit-scrollbar{width:5px;height:5px;}
+        ::-webkit-scrollbar-track{background:transparent;}
+        ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:10px;}
+    </style>
 </head>
 <body>
 
+<aside class="sidebar">
+    <div class="sb-brand">
+        <div class="sb-icon">🍳</div>
+        <div class="sb-name">Central Kitchen</div>
+        <div class="sb-sub">ADMIN PORTAL</div>
+    </div>
+    <nav class="nav-sec">
+        <div class="nav-lbl">Menu</div>
+        <div class="nav-item active" onclick="showPage('dashboard',this)"><span>◈</span> Tổng quan</div>
+        <div class="nav-item" onclick="showPage('users',this)"><span>◉</span> Người dùng</div>
+        <div class="nav-item" onclick="showPage('stores',this)"><span>◫</span> Cửa hàng</div>
+        <div class="nav-item" onclick="showPage('products',this)"><span>◆</span> Sản phẩm</div>
+    </nav>
+    <div class="sb-user">
+        <div class="sb-av">AD</div>
+        <div><div class="sb-uname">Admin</div><div class="sb-urole">ADMINISTRATOR</div></div>
+    </div>
+</aside>
+
+<main class="main">
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+        <div class="ph"><div><h1>Tổng quan</h1><p>Thống kê hệ thống Central Kitchen</p></div></div>
+        <div class="sg">
+            <div class="sc"><div class="sc-icon">👤</div><div class="sc-lbl">Tổng người dùng</div><div class="sc-val vp" id="s-users">—</div></div>
+            <div class="sc"><div class="sc-icon">✓</div><div class="sc-lbl">Đang hoạt động</div><div class="sc-val vg" id="s-active">—</div></div>
+            <div class="sc"><div class="sc-icon">🏪</div><div class="sc-lbl">Cửa hàng</div><div class="sc-val va" id="s-stores">—</div></div>
+            <div class="sc"><div class="sc-icon">📦</div><div class="sc-lbl">Sản phẩm</div><div class="sc-val vb" id="s-products">—</div></div>
+        </div>
+        <div class="card"><div class="ch"><h3>Hệ thống</h3></div>
+            <div class="es"><div class="ei">◈</div><div class="et">Chọn mục bên trái để bắt đầu quản lý</div></div>
+        </div>
+    </div>
+
+    <!-- USERS -->
+    <div id="page-users" class="page">
+        <div class="ph">
+            <div><h1>Người dùng</h1><p>Quản lý tài khoản và phân quyền</p></div>
+            <button class="btn bp" onclick="openUserModal()">+ Thêm người dùng</button>
+        </div>
+        <div class="card">
+            <div class="ch">
+                <h3 id="uc">Danh sách</h3>
+                <div class="ca">
+                    <div class="sw"><span class="si">⌕</span><input class="sinp" id="us" placeholder="Tìm tên, username..." oninput="filterUsers(this.value)"/></div>
+                    <select class="fsel" id="rf" onchange="filterUsers(document.getElementById('us').value)">
+                        <option value="">Tất cả vai trò</option>
+                        <option value="ADMIN">ADMIN</option>
+                        <option value="MANAGER">MANAGER</option>
+                        <option value="SUPPLY_COORDINATOR">SUPPLY_COORDINATOR</option>
+                        <option value="KITCHEN_STAFF">KITCHEN_STAFF</option>
+                        <option value="STORE_STAFF">STORE_STAFF</option>
+                    </select>
+                    <select class="fsel" id="sf" onchange="filterUsers(document.getElementById('us').value)">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="true">Hoạt động</option>
+                        <option value="false">Vô hiệu</option>
+                    </select>
+                </div>
+            </div>
+            <div class="tw" id="utw"><div class="ld"><div class="sp"></div>Đang tải...</div></div>
+            <div class="pg" id="upg"></div>
+        </div>
+    </div>
+
+    <!-- STORES -->
+    <div id="page-stores" class="page">
+        <div class="ph">
+            <div><h1>Cửa hàng</h1><p>Bếp trung tâm và chi nhánh franchise</p></div>
+            <button class="btn bp" onclick="openStoreModal()">+ Thêm cửa hàng</button>
+        </div>
+        <div class="card">
+            <div class="ch">
+                <h3 id="stc">Danh sách</h3>
+                <div class="ca">
+                    <div class="sw"><span class="si">⌕</span><input class="sinp" id="ss" placeholder="Tìm tên cửa hàng..." oninput="filterStores(this.value)"/></div>
+                    <select class="fsel" id="tf" onchange="filterStores(document.getElementById('ss').value)">
+                        <option value="">Tất cả loại</option>
+                        <option value="CENTRAL_KITCHEN">Bếp trung tâm</option>
+                        <option value="FRANCHISE_STORE">Franchise</option>
+                    </select>
+                </div>
+            </div>
+            <div class="tw" id="stw"><div class="ld"><div class="sp"></div>Đang tải...</div></div>
+            <div class="pg" id="spg"></div>
+        </div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div id="page-products" class="page">
+        <div class="ph">
+            <div><h1>Sản phẩm</h1><p>Nguyên liệu và thành phẩm</p></div>
+            <button class="btn bp" onclick="openProductModal()">+ Thêm sản phẩm</button>
+        </div>
+        <div class="card">
+            <div class="ch">
+                <h3 id="pc">Danh sách</h3>
+                <div class="ca">
+                    <div class="sw"><span class="si">⌕</span><input class="sinp" id="ps" placeholder="Tìm tên sản phẩm..." oninput="filterProducts(this.value)"/></div>
+                    <select class="fsel" id="cf" onchange="filterProducts(document.getElementById('ps').value)">
+                        <option value="">Tất cả danh mục</option>
+                    </select>
+                </div>
+            </div>
+            <div class="tw" id="ptw"><div class="ld"><div class="sp"></div>Đang tải...</div></div>
+            <div class="pg" id="ppg"></div>
+        </div>
+    </div>
+</main>
+
+<!-- MODAL USER -->
+<div class="mo" id="mu">
+    <div class="mb">
+        <div class="mh"><h3 id="mut">Thêm người dùng</h3><button class="mc" onclick="closeModal('mu')">✕</button></div>
+        <div class="mbody">
+            <input type="hidden" id="uid"/>
+            <div class="fr">
+                <div class="fg"><label class="fl">Username</label><input class="fi" id="uun" placeholder="username"/></div>
+                <div class="fg"><label class="fl">Mật khẩu</label><input class="fi" id="upw" type="password" placeholder="Để trống nếu không đổi"/></div>
+            </div>
+            <div class="fg"><label class="fl">Họ và tên</label><input class="fi" id="ufn" placeholder="Nguyễn Văn A"/></div>
+            <div class="fr">
+                <div class="fg"><label class="fl">Email</label><input class="fi" id="uem" placeholder="email@ck.vn"/></div>
+                <div class="fg"><label class="fl">Vai trò</label>
+                    <select class="fi" id="url">
+                        <option value="ADMIN">ADMIN</option><option value="MANAGER">MANAGER</option>
+                        <option value="SUPPLY_COORDINATOR">SUPPLY_COORDINATOR</option>
+                        <option value="KITCHEN_STAFF">KITCHEN_STAFF</option><option value="STORE_STAFF">STORE_STAFF</option>
+                    </select>
+                </div>
+            </div>
+            <div class="fr">
+                <div class="fg"><label class="fl">Cửa hàng</label><select class="fi" id="ust"><option value="">— Không gán —</option></select></div>
+                <div class="fg"><label class="fl">Trạng thái</label>
+                    <select class="fi" id="uac"><option value="true">Hoạt động</option><option value="false">Vô hiệu</option></select>
+                </div>
+            </div>
+        </div>
+        <div class="mf"><button class="btn" onclick="closeModal('mu')">Hủy</button><button class="btn bp" onclick="saveUser()">Lưu</button></div>
+    </div>
+</div>
+
+<!-- MODAL STORE -->
+<div class="mo" id="mst">
+    <div class="mb">
+        <div class="mh"><h3 id="mstt">Thêm cửa hàng</h3><button class="mc" onclick="closeModal('mst')">✕</button></div>
+        <div class="mbody">
+            <input type="hidden" id="stid"/>
+            <div class="fg"><label class="fl">Tên cửa hàng</label><input class="fi" id="stn" placeholder="Chi nhánh Quận X"/></div>
+            <div class="fg"><label class="fl">Địa chỉ</label><input class="fi" id="sta" placeholder="123 Đường ABC, TP.HCM"/></div>
+            <div class="fr">
+                <div class="fg"><label class="fl">Số điện thoại</label><input class="fi" id="stp" placeholder="028xxxxxxxx"/></div>
+                <div class="fg"><label class="fl">Loại</label>
+                    <select class="fi" id="stt"><option value="CENTRAL_KITCHEN">Bếp trung tâm</option><option value="FRANCHISE_STORE">Chi nhánh franchise</option></select>
+                </div>
+            </div>
+            <div class="fg"><label class="fl">Trạng thái</label>
+                <select class="fi" id="stac"><option value="true">Hoạt động</option><option value="false">Vô hiệu</option></select>
+            </div>
+        </div>
+        <div class="mf"><button class="btn" onclick="closeModal('mst')">Hủy</button><button class="btn bp" onclick="saveStore()">Lưu</button></div>
+    </div>
+</div>
+
+<!-- MODAL PRODUCT -->
+<div class="mo" id="mp">
+    <div class="mb">
+        <div class="mh"><h3 id="mpt">Thêm sản phẩm</h3><button class="mc" onclick="closeModal('mp')">✕</button></div>
+        <div class="mbody">
+            <input type="hidden" id="pid"/>
+            <div class="fg"><label class="fl">Tên sản phẩm</label><input class="fi" id="pn" placeholder="Thịt heo xay"/></div>
+            <div class="fr">
+                <div class="fg"><label class="fl">Danh mục</label><input class="fi" id="pcat" placeholder="Thịt / Rau củ / Thành phẩm"/></div>
+                <div class="fg"><label class="fl">Đơn vị</label><input class="fi" id="punit" placeholder="kg / lít / phần"/></div>
+            </div>
+            <div class="fr">
+                <div class="fg"><label class="fl">Định mức chuẩn</label><input class="fi" id="pqty" type="number" placeholder="0" min="0"/></div>
+                <div class="fg"><label class="fl">Trạng thái</label>
+                    <select class="fi" id="pac"><option value="true">Hoạt động</option><option value="false">Vô hiệu</option></select>
+                </div>
+            </div>
+            <div class="fg"><label class="fl">Mô tả</label><input class="fi" id="pdesc" placeholder="Mô tả ngắn..."/></div>
+        </div>
+        <div class="mf"><button class="btn" onclick="closeModal('mp')">Hủy</button><button class="btn bp" onclick="saveProduct()">Lưu</button></div>
+    </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="co" id="co">
+    <div class="cb">
+        <div class="ci">⚠️</div>
+        <div class="ct" id="ct">Xác nhận</div>
+        <div class="cm" id="cm">Bạn có chắc chắn không?</div>
+        <div class="cbb">
+            <button class="btn" onclick="closeConfirm()">Hủy</button>
+            <button class="btn bd" onclick="doConfirm()">Xác nhận</button>
+        </div>
+    </div>
+</div>
+
+<div class="tc" id="tc"></div>
+
+<script>
+    const API='http://localhost:8080/api/admin';
+    let allUsers=[],allStores=[],allProducts=[];
+    let fUsers=[],fStores=[],fProducts=[];
+    let uPage=1,stPage=1,pPage=1;
+    const PS=8;
+    let cfCb=null;
+
+    function showPage(n,el){
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+      document.getElementById('page-'+n).classList.add('active');
+      el.classList.add('active');
+      if(n==='dashboard')loadStats();
+      if(n==='users'){uPage=1;loadUsers();}
+      if(n==='stores'){stPage=1;loadStores();}
+      if(n==='products'){pPage=1;loadProducts();}
+    }
+
+    function toast(msg,type='success'){
+      const c=document.getElementById('tc');
+      const t=document.createElement('div');
+      t.className=`toast ${type}`;
+      t.innerHTML=`<span class="td"></span>${msg}`;
+      c.appendChild(t);
+      setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(20px)';t.style.transition='all 0.3s';setTimeout(()=>t.remove(),300);},2500);
+    }
+
+    function openModal(id){document.getElementById(id).classList.add('open');}
+    function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+    function showConfirm(title,msg,cb){
+      document.getElementById('ct').textContent=title;
+      document.getElementById('cm').textContent=msg;
+      cfCb=cb;
+      document.getElementById('co').classList.add('open');
+    }
+    function closeConfirm(){document.getElementById('co').classList.remove('open');cfCb=null;}
+    function doConfirm(){if(cfCb)cfCb();closeConfirm();}
+
+    function avColor(s){
+      const c=[{bg:'rgba(124,109,250,0.15)',t:'#9d91fb'},{bg:'rgba(61,214,140,0.15)',t:'#3dd68c'},{bg:'rgba(91,156,246,0.15)',t:'#5b9cf6'},{bg:'rgba(245,166,35,0.15)',t:'#f5a623'},{bg:'rgba(45,212,191,0.15)',t:'#2dd4bf'},{bg:'rgba(255,107,107,0.15)',t:'#ff6b6b'}];
+      let h=0;for(let x of s)h=(h*31+x.charCodeAt(0))%c.length;return c[h];
+    }
+    function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+    function mkAv(n){const{bg,t}=avColor(n);return `<div class="av" style="background:${bg};color:${t}">${initials(n)}</div>`;}
+
+    function roleBadge(r){
+      const m={ADMIN:'ba',MANAGER:'bm',SUPPLY_COORDINATOR:'bc',KITCHEN_STAFF:'bk',STORE_STAFF:'bst'};
+      const l={ADMIN:'Admin',MANAGER:'Manager',SUPPLY_COORDINATOR:'Coord.',KITCHEN_STAFF:'Bếp',STORE_STAFF:'CH'};
+      return `<span class="badge ${m[r]||''}">${l[r]||r}</span>`;
+    }
+
+    function pgSlice(arr,pg){return arr.slice((pg-1)*PS,pg*PS);}
+    function renderPg(cid,total,pg,onChangeFn){
+      const pages=Math.ceil(total/PS)||1;
+      const el=document.getElementById(cid);
+      el.innerHTML=`<span class="pgi">${total} bản ghi · Trang ${pg}/${pages}</span>
+        <div class="pgb">
+          <button class="pb" onclick="${onChangeFn}(${pg-1})" ${pg<=1?'disabled':''}>‹</button>
+          ${Array.from({length:pages},(_,i)=>`<button class="pb ${i+1===pg?'act':''}" onclick="${onChangeFn}(${i+1})">${i+1}</button>`).join('')}
+          <button class="pb" onclick="${onChangeFn}(${pg+1})" ${pg>=pages?'disabled':''}>›</button>
+        </div>`;
+    }
+
+    async function loadStats(){
+      try{const r=await fetch(API+'/stats');const d=await r.json();
+        document.getElementById('s-users').textContent=d.totalUsers??'—';
+        document.getElementById('s-active').textContent=d.activeUsers??'—';
+        document.getElementById('s-stores').textContent=d.totalStores??'—';
+        document.getElementById('s-products').textContent=d.totalProducts??'—';
+      }catch(e){toast('Không tải được thống kê','error');}
+    }
+
+    // USERS
+    function renderUsers(list){
+      const w=document.getElementById('utw');
+      if(!list.length){w.innerHTML='<div class="es"><div class="ei">◉</div><div class="et">Không tìm thấy người dùng</div></div>';return;}
+      const pg=pgSlice(list,uPage);
+      w.innerHTML=`<table><thead><tr><th>#</th><th>Người dùng</th><th>Email</th><th>Vai trò</th><th>Cửa hàng</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+        <tbody>${pg.map(u=>`<tr>
+          <td class="tm">${u.id}</td>
+          <td><div class="tu">${mkAv(u.fullName)}<div><div class="tn">${u.fullName}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">@${u.username}</div></div></div></td>
+          <td class="tm" style="font-size:12px">${u.email||'—'}</td>
+          <td>${roleBadge(u.role)}</td>
+          <td>${u.store?`<span style="font-size:12px">${u.store.name}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
+          <td><span class="badge ${u.isActive?'bon':'boff'}">${u.isActive?'Hoạt động':'Vô hiệu'}</span></td>
+          <td><div class="tda"><button class="btn bs" onclick="editUser(${u.id})">Sửa</button><button class="btn bs bd" onclick="askDelUser(${u.id},'${u.fullName.replace(/'/g,"\\'")}')">Xóa</button></div></td>
+        </tr>`).join('')}</tbody></table>`;
+      renderPg('upg',list.length,uPage,'goU');
+    }
+    window.goU=function(p){uPage=p;renderUsers(fUsers);};
+
+    async function loadUsers(){
+      document.getElementById('utw').innerHTML='<div class="ld"><div class="sp"></div>Đang tải...</div>';
+      try{const r=await fetch(API+'/users');allUsers=await r.json();
+        await loadStoresSel();fUsers=[...allUsers];
+        document.getElementById('uc').textContent=`Danh sách (${allUsers.length})`;
+        renderUsers(fUsers);
+      }catch(e){toast('Lỗi tải người dùng','error');}
+    }
+
+    function filterUsers(q){
+      const role=document.getElementById('rf').value;
+      const stat=document.getElementById('sf').value;
+      fUsers=allUsers.filter(u=>{
+        const mq=!q||u.fullName.toLowerCase().includes(q.toLowerCase())||u.username.toLowerCase().includes(q.toLowerCase());
+        const mr=!role||u.role===role;
+        const ms=stat===''||String(u.isActive)===stat;
+        return mq&&mr&&ms;
+      });
+      uPage=1;renderUsers(fUsers);
+    }
+
+    async function loadStoresSel(){
+      if(!allStores.length){const r=await fetch(API+'/stores');allStores=await r.json();}
+      document.getElementById('ust').innerHTML='<option value="">— Không gán —</option>'+allStores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    }
+
+    function openUserModal(u=null){
+      document.getElementById('mut').textContent=u?'Chỉnh sửa người dùng':'Thêm người dùng mới';
+      document.getElementById('uid').value=u?.id||'';
+      document.getElementById('uun').value=u?.username||'';
+      document.getElementById('upw').value='';
+      document.getElementById('ufn').value=u?.fullName||'';
+      document.getElementById('uem').value=u?.email||'';
+      document.getElementById('url').value=u?.role||'STORE_STAFF';
+      document.getElementById('ust').value=u?.store?.id||'';
+      document.getElementById('uac').value=u?String(u.isActive):'true';
+      openModal('mu');
+    }
+    function editUser(id){openUserModal(allUsers.find(u=>u.id===id));}
+    function askDelUser(id,name){showConfirm('Vô hiệu hóa người dùng',`Bạn có chắc muốn vô hiệu hóa "${name}"?`,()=>deleteUser(id));}
+
+    async function saveUser(){
+      const id=document.getElementById('uid').value;
+      const sid=document.getElementById('ust').value;
+      const body={username:document.getElementById('uun').value,passwordHash:document.getElementById('upw').value||'unchanged',fullName:document.getElementById('ufn').value,email:document.getElementById('uem').value,role:document.getElementById('url').value,store:sid?{id:parseInt(sid)}:null,isActive:document.getElementById('uac').value==='true'};
+      try{const r=await fetch(id?`${API}/users/${id}`:`${API}/users`,{method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if(!r.ok){const e=await r.json();toast(e.error||'Lỗi lưu','error');return;}
+        toast(id?'Cập nhật thành công':'Thêm người dùng thành công');closeModal('mu');loadUsers();
+      }catch(e){toast('Lỗi kết nối server','error');}
+    }
+    async function deleteUser(id){
+      try{await fetch(`${API}/users/${id}`,{method:'DELETE'});toast('Đã vô hiệu hóa người dùng');loadUsers();}
+      catch(e){toast('Lỗi kết nối server','error');}
+    }
+
+    // STORES
+    function renderStores(list){
+      const w=document.getElementById('stw');
+      if(!list.length){w.innerHTML='<div class="es"><div class="ei">◫</div><div class="et">Không tìm thấy cửa hàng</div></div>';return;}
+      const pg=pgSlice(list,stPage);
+      w.innerHTML=`<table><thead><tr><th>#</th><th>Tên cửa hàng</th><th>Địa chỉ</th><th>SĐT</th><th>Loại</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+        <tbody>${pg.map(s=>`<tr>
+          <td class="tm">${s.id}</td><td class="tn">${s.name}</td>
+          <td style="font-size:12px;color:var(--text3)">${s.address||'—'}</td>
+          <td class="tm" style="font-size:12px">${s.phone||'—'}</td>
+          <td><span class="badge ${s.type==='CENTRAL_KITCHEN'?'bct':'bfr'}">${s.type==='CENTRAL_KITCHEN'?'Bếp TT':'Franchise'}</span></td>
+          <td><span class="badge ${s.isActive?'bon':'boff'}">${s.isActive?'Hoạt động':'Vô hiệu'}</span></td>
+          <td><div class="tda"><button class="btn bs" onclick="editStore(${s.id})">Sửa</button><button class="btn bs bd" onclick="askDelStore(${s.id},'${s.name.replace(/'/g,"\\'")}')">Xóa</button></div></td>
+        </tr>`).join('')}</tbody></table>`;
+      renderPg('spg',list.length,stPage,'goSt');
+    }
+    window.goSt=function(p){stPage=p;renderStores(fStores);};
+
+    async function loadStores(){
+      document.getElementById('stw').innerHTML='<div class="ld"><div class="sp"></div>Đang tải...</div>';
+      try{const r=await fetch(API+'/stores');allStores=await r.json();
+        fStores=[...allStores];document.getElementById('stc').textContent=`Danh sách (${allStores.length})`;
+        renderStores(fStores);
+      }catch(e){toast('Lỗi tải cửa hàng','error');}
+    }
+    function filterStores(q){
+      const type=document.getElementById('tf').value;
+      fStores=allStores.filter(s=>(!q||s.name.toLowerCase().includes(q.toLowerCase()))&&(!type||s.type===type));
+      stPage=1;renderStores(fStores);
+    }
+    function openStoreModal(s=null){
+      document.getElementById('mstt').textContent=s?'Chỉnh sửa cửa hàng':'Thêm cửa hàng mới';
+      document.getElementById('stid').value=s?.id||'';
+      document.getElementById('stn').value=s?.name||'';
+      document.getElementById('sta').value=s?.address||'';
+      document.getElementById('stp').value=s?.phone||'';
+      document.getElementById('stt').value=s?.type||'FRANCHISE_STORE';
+      document.getElementById('stac').value=s?String(s.isActive):'true';
+      openModal('mst');
+    }
+    function editStore(id){openStoreModal(allStores.find(s=>s.id===id));}
+    function askDelStore(id,name){showConfirm('Vô hiệu hóa cửa hàng',`Bạn có chắc muốn vô hiệu hóa "${name}"?`,()=>deleteStore(id));}
+    async function saveStore(){
+      const id=document.getElementById('stid').value;
+      const body={name:document.getElementById('stn').value,address:document.getElementById('sta').value,phone:document.getElementById('stp').value,type:document.getElementById('stt').value,isActive:document.getElementById('stac').value==='true'};
+      try{await fetch(id?`${API}/stores/${id}`:`${API}/stores`,{method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        toast(id?'Cập nhật thành công':'Thêm cửa hàng thành công');closeModal('mst');loadStores();
+      }catch(e){toast('Lỗi kết nối server','error');}
+    }
+    async function deleteStore(id){
+      try{await fetch(`${API}/stores/${id}`,{method:'DELETE'});toast('Đã vô hiệu hóa cửa hàng');loadStores();}
+      catch(e){toast('Lỗi kết nối server','error');}
+    }
+
+    // PRODUCTS
+    function renderProducts(list){
+      const w=document.getElementById('ptw');
+      if(!list.length){w.innerHTML='<div class="es"><div class="ei">◆</div><div class="et">Không tìm thấy sản phẩm</div></div>';return;}
+      const pg=pgSlice(list,pPage);
+      w.innerHTML=`<table><thead><tr><th>#</th><th>Tên sản phẩm</th><th>Danh mục</th><th>Đơn vị</th><th>Định mức</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+        <tbody>${pg.map(p=>`<tr>
+          <td class="tm">${p.id}</td><td class="tn">${p.name}</td>
+          <td><span style="font-size:12px;color:var(--text3)">${p.category||'—'}</span></td>
+          <td class="tm">${p.unit}</td><td class="tm">${p.standardQuantity??0}</td>
+          <td><span class="badge ${p.isActive?'bon':'boff'}">${p.isActive?'Hoạt động':'Vô hiệu'}</span></td>
+          <td><div class="tda"><button class="btn bs" onclick="editProduct(${p.id})">Sửa</button><button class="btn bs bd" onclick="askDelProduct(${p.id},'${p.name.replace(/'/g,"\\'")}')">Xóa</button></div></td>
+        </tr>`).join('')}</tbody></table>`;
+      renderPg('ppg',list.length,pPage,'goP');
+    }
+    window.goP=function(p){pPage=p;renderProducts(fProducts);};
+
+    async function loadProducts(){
+      document.getElementById('ptw').innerHTML='<div class="ld"><div class="sp"></div>Đang tải...</div>';
+      try{const r=await fetch(API+'/products');allProducts=await r.json();
+        fProducts=[...allProducts];document.getElementById('pc').textContent=`Danh sách (${allProducts.length})`;
+        const cats=[...new Set(allProducts.map(p=>p.category).filter(Boolean))];
+        document.getElementById('cf').innerHTML='<option value="">Tất cả danh mục</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+        renderProducts(fProducts);
+      }catch(e){toast('Lỗi tải sản phẩm','error');}
+    }
+    function filterProducts(q){
+      const cat=document.getElementById('cf').value;
+      fProducts=allProducts.filter(p=>(!q||p.name.toLowerCase().includes(q.toLowerCase()))&&(!cat||p.category===cat));
+      pPage=1;renderProducts(fProducts);
+    }
+    function openProductModal(p=null){
+      document.getElementById('mpt').textContent=p?'Chỉnh sửa sản phẩm':'Thêm sản phẩm mới';
+      document.getElementById('pid').value=p?.id||'';
+      document.getElementById('pn').value=p?.name||'';
+      document.getElementById('pcat').value=p?.category||'';
+      document.getElementById('punit').value=p?.unit||'';
+      document.getElementById('pqty').value=p?.standardQuantity??0;
+      document.getElementById('pdesc').value=p?.description||'';
+      document.getElementById('pac').value=p?String(p.isActive):'true';
+      openModal('mp');
+    }
+    function editProduct(id){openProductModal(allProducts.find(p=>p.id===id));}
+    function askDelProduct(id,name){showConfirm('Vô hiệu hóa sản phẩm',`Bạn có chắc muốn vô hiệu hóa "${name}"?`,()=>deleteProduct(id));}
+    async function saveProduct(){
+      const id=document.getElementById('pid').value;
+      const body={name:document.getElementById('pn').value,category:document.getElementById('pcat').value,unit:document.getElementById('punit').value,standardQuantity:parseFloat(document.getElementById('pqty').value)||0,description:document.getElementById('pdesc').value,isActive:document.getElementById('pac').value==='true'};
+      try{await fetch(id?`${API}/products/${id}`:`${API}/products`,{method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        toast(id?'Cập nhật thành công':'Thêm sản phẩm thành công');closeModal('mp');loadProducts();
+      }catch(e){toast('Lỗi kết nối server','error');}
+    }
+    async function deleteProduct(id){
+      try{await fetch(`${API}/products/${id}`,{method:'DELETE'});toast('Đã vô hiệu hóa sản phẩm');loadProducts();}
+      catch(e){toast('Lỗi kết nối server','error');}
+    }
+
+    loadStats();
+</script>
 </body>
 </html>
