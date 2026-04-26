@@ -1,4 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -6,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Central Kitchen System - Dashboard Home</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
         :root {
             --primary: #e05c2a;
@@ -118,61 +120,91 @@
             transform: none;
             box-shadow: none;
         }
+
+        .icon-wrap {
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.04);
+            border-radius: 8px;
+            margin-right: 14px;
+            flex-shrink: 0;
+        }
+        .icon-wrap svg { width: 18px; height: 18px; }
+        .icon-trail { width: 16px; height: 16px; opacity: 0.4; }
     </style>
 </head>
 <body>
+        <div class="container">
 
-    <div class="container">
-        <h1>🍳 Central Kitchen System</h1>
-        <p class="subtitle">Chọn phân hệ để truy cập</p>
+            <%-- Header: hiển thị tên user --%>
+            <h1>Central Kitchen System</h1>
+            <p class="subtitle">
+                Xin chào, <strong>${currentUser.fullName}</strong> · Chọn phân hệ để truy cập
+            </p>
 
-        <div class="role-list">
-            <!-- 1. Điều phối cung ứng -->
-            <a href="${pageContext.request.contextPath}/supply-coordinator/index.html" class="role-card not-ready" title="Đang phát triển">
-                <span class="icon">📦</span>
-                <div class="info">
-                    <span>Supply Coordinator</span>
-                    <small>Điều phối cung ứng (Đang phát triển)</small>
-                </div>
-            </a>
+            <div class="role-list">
 
-            <!-- 2. Quản lý vận hành -->
-            <a href="${pageContext.request.contextPath}/manager-admin/index.html" class="role-card">
-                <span class="icon">📈</span>
-                <div class="info">
-                    <span>Manager</span>
-                    <small>Quản lý vận hành</small>
-                </div>
-            </a>
+                <%-- Chỉ ADMIN và MANAGER thấy --%>
+                <c:if test="${currentUser.role == 'ADMIN' || currentUser.role == 'MANAGER'}">
+                    <a href="${pageContext.request.contextPath}/manager-admin" class="role-card">
+                        <div class="icon-wrap"><i data-lucide="settings-2"></i></div>
+                        <div class="info">
+                            <span>Admin / Manager</span>
+                            <small>Quản trị hệ thống</small>
+                        </div>
+                        <i data-lucide="chevron-right" class="icon-trail"></i>
+                    </a>
+                </c:if>
 
-            <!-- 3. Bếp trung tâm -->
-            <a href="${pageContext.request.contextPath}/kitchen-staff/index.jsp" class="role-card">
-                <span class="icon">👨‍🍳</span>
-                <div class="info">
-                    <span>Central Kitchen Staff</span>
-                    <small>Nhân viên bếp trung tâm</small>
-                </div>
-            </a>
+                <%-- Chỉ KITCHEN_STAFF thấy --%>
+                <c:if test="${currentUser.role == 'KITCHEN_STAFF'}">
+                    <a href="${pageContext.request.contextPath}/kitchen-staff" class="role-card">
+                        <div class="icon-wrap"><i data-lucide="utensils"></i></div>
+                        <div class="info">
+                            <span>Central Kitchen Staff</span>
+                            <small>Nhân viên bếp trung tâm</small>
+                        </div>
+                        <i data-lucide="chevron-right" class="icon-trail"></i>
+                    </a>
+                </c:if>
 
-            <!-- 4. Quản trị hệ thống -->
-            <a href="${pageContext.request.contextPath}/admin/index.html" class="role-card not-ready" title="Đang phát triển">
-                <span class="icon">⚙️</span>
-                <div class="info">
-                    <span>Admin</span>
-                    <small>Quản trị hệ thống (Đang phát triển)</small>
-                </div>
-            </a>
+                <%-- Chỉ STORE_STAFF thấy --%>
+                <c:if test="${currentUser.role == 'STORE_STAFF'}">
+                    <a href="${pageContext.request.contextPath}/store-staff" class="role-card">
+                        <div class="icon-wrap"><i data-lucide="store"></i></div>
+                        <div class="info">
+                            <span>Franchise Store Staff</span>
+                            <small>Nhân viên cửa hàng</small>
+                        </div>
+                        <i data-lucide="chevron-right" class="icon-trail"></i>
+                    </a>
+                </c:if>
 
-            <!-- 5. Nhân viên cửa hàng -->
-            <a href="${pageContext.request.contextPath}/store-staff/index.html" class="role-card">
-                <span class="icon">🏪</span>
-                <div class="info">
-                    <span>Franchise Store Staff</span>
-                    <small>Nhân viên cửa hàng</small>
-                </div>
-            </a>
+                <%-- Chỉ SUPPLY_COORDINATOR thấy --%>
+                <c:if test="${currentUser.role == 'SUPPLY_COORDINATOR'}">
+                    <a href="${pageContext.request.contextPath}/supply-coordinator" class="role-card">
+                        <div class="icon-wrap"><i data-lucide="truck"></i></div>
+                        <div class="info">
+                            <span>Supply Coordinator</span>
+                            <small>Điều phối cung ứng</small>
+                        </div>
+                        <i data-lucide="chevron-right" class="icon-trail"></i>
+                    </a>
+                </c:if>
+
+                <%-- Nút đăng xuất --%>
+                <a href="${pageContext.request.contextPath}/auth/logout"
+                   class="role-card"
+                   style="border-color:#ffd9cc;color:#e05c2a;margin-top:8px;">
+                    <div class="icon-wrap"><i data-lucide="log-out"></i></div>
+                    <div class="info">
+                        <span>Đăng xuất</span>
+                        <small>Thoát khỏi hệ thống</small>
+                    </div>
+                </a>
+
+            </div>
         </div>
-    </div>
-
+      <script>lucide.createIcons();</script>
 </body>
 </html>

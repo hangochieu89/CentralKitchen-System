@@ -1,15 +1,18 @@
 package com.centralkitchen.backend.controller;
 
+import com.centralkitchen.backend.entity.Order;
 import com.centralkitchen.backend.entity.Product;
 import com.centralkitchen.backend.entity.Store;
 import com.centralkitchen.backend.entity.User;
+import com.centralkitchen.backend.repository.InventoryRepository;
+import com.centralkitchen.backend.repository.OrderRepository;
 import com.centralkitchen.backend.repository.ProductRepository;
 import com.centralkitchen.backend.repository.StoreRepository;
 import com.centralkitchen.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +24,8 @@ public class AdminController {
     @Autowired private UserRepository userRepository;
     @Autowired private StoreRepository storeRepository;
     @Autowired private ProductRepository productRepository;
+    @Autowired private OrderRepository orderRepository;
+    @Autowired private InventoryRepository inventoryRepository;
 
     // ==================== THỐNG KÊ ====================
     @GetMapping("/stats")
@@ -134,5 +139,61 @@ public class AdminController {
             productRepository.save(product);
             return ResponseEntity.ok(Map.of("message", "Đã vô hiệu hóa sản phẩm"));
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // ==================== DASHBOARD CHARTS ====================
+
+    @GetMapping("/dashboard/orders-by-day")
+    public ResponseEntity<?> getOrdersByDay() {
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(6);
+        List<Order> orders = orderRepository.findByOrderDateBetween(sevenDaysAgo, LocalDateTime.now());
+
+        // Group theo ngày
+        Map<String, Long> result = new java.util.LinkedHashMap<>();
+        for (int i = 6; i >= 0; i--) {
+            String date = LocalDateTime.now().minusDays(i)
+                    .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"));
+            result.put(date, 0L);
+        }
+        orders.forEach(o -> {
+            String date = o.getOrderDate()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"));
+            result.merge(date, 1L, Long::sum);
+        });
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/dashboard/orders-by-status")
+    public ResponseEntity<?> getOrdersByStatus() {
+        List<Order> all = orderRepository.findAll();
+        Map<String, Long> result = new java.util.LinkedHashMap<>();
+        String[] statuses = {"PENDING","CONFIRMED","IN_PRODUCTION","READY","DELIVERING","DELIVERED","CANCELLED"};
+        for (String s : statuses) result.put(s, 0L);
+        all.forEach(o -> result.merge(o.getStatus(), 1L, Long::sum));
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/dashboard/top-stores")
+    public ResponseEntity<?> getTopStores() {
+        List<Order> all = orderRepository.findAll();
+        Map<String, Long> result = new java.util.LinkedHashMap<>();
+        all.forEach(o -> {
+            String name = o.getStore().getName();
+            result.merge(name, 1L, Long::sum);
+        });
+        // Sort giảm dần
+        return ResponseEntity.ok(
+                result.entrySet().stream()
+                        .sorted(Map.Entry.<String,Long>comparingByValue().reversed())
+                        .limit(5)
+                        .collect(java.util.stream.Collectors.toMap(
+                                Map.Entry::getKey, Map.Entry::getValue,
+                                (e1,e2)->e1, java.util.LinkedHashMap::new))
+        );
+    }
+
+    @GetMapping("/dashboard/low-stock")
+    public ResponseEntity<?> getLowStock() {
+        return ResponseEntity.ok(inventoryRepository.findLowStockItems());
     }
 }
