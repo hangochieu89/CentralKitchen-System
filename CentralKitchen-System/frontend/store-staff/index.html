@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Cửa hàng Franchise - Đặt hàng & Tồn kho</title>
+    <link rel="stylesheet" href="../css/kitchen-staff-styles.css"> </head>
+<body>
+<header>
+    <div class="brand">Store Management</div>
+    <div class="user-chip"><span>Nhân viên Cửa hàng</span></div>
+</header>
+
+<main>
+    <div class="page-header">
+        <h1>Quản lý Cửa hàng</h1>
+        <div class="actions">
+            <button class="btn btn-primary" onclick="openOrderModal()">+ Tạo đơn đặt hàng mới</button>
+        </div>
+    </div>
+
+    <section class="panel">
+        <header class="panel-head"><h2>Danh sách đơn hàng đã đặt</h2></header>
+        <div class="table-wrap">
+            <table id="order-table">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Ngày đặt</th>
+                        <th>Ngày nhận dự kiến</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<dialog id="dlg-order">
+    <header><h3>Tạo đơn đặt hàng</h3></header>
+    <div class="dialog-body">
+        <div class="form-group">
+            <label>Ngày mong muốn nhận</label>
+            <input type="datetime-local" id="delivery-date">
+        </div>
+        <div id="product-selection-list">
+            </div>
+    </div>
+    <footer>
+        <button class="btn btn-secondary" onclick="document.getElementById('dlg-order').close()">Hủy</button>
+        <button class="btn btn-primary" onclick="submitOrder()">Gửi đơn hàng</button>
+    </footer>
+</dialog>
+
+<script>
+    const STORE_ID = 2; // Giả định ID cửa hàng hiện tại
+    const USER_ID = 7;  // Giả định ID user đang đăng nhập
+
+    async function loadOrders() {
+        const response = await fetch(`/api/store-staff/orders/${STORE_ID}`);
+        const orders = await response.json();
+        const tbody = document.querySelector("#order-table tbody");
+        tbody.innerHTML = orders.map(o => `
+            <tr>
+                <td>#ORD-${o.id}</td>
+                <td>${new Date(o.orderDate).toLocaleString()}</td>
+                <td>${o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString() : '-'}</td>
+                <td><span class="badge badge-pending">${o.status}</span></td>
+                <td><button class="btn btn-sm">Chi tiết</button></td>
+            </tr>
+        `).join('');
+    }
+
+    async function submitOrder() {
+        const data = {
+            storeId: STORE_ID,
+            userId: USER_ID,
+            deliveryDate: document.getElementById('delivery-date').value,
+            items: [
+                { productId: 1, quantity: 10.0, note: "Cần gấp" } // Demo tĩnh
+            ]
+        };
+
+        const response = await fetch('/api/store-staff/orders', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+
+        if(response.ok) {
+            alert("Đặt hàng thành công!");
+            document.getElementById('dlg-order').close();
+            loadOrders();
+        }
+    }
+
+    window.onload = loadOrders;
+</script>
+</body>
+</html>
