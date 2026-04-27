@@ -192,6 +192,50 @@ public class AdminController {
         );
     }
 
+    // ==================== PERMANENT DELETE ====================
+
+    @DeleteMapping("/users/{id}/permanent")
+    public ResponseEntity<?> permanentDeleteUser(@PathVariable Integer id) {
+        return userRepository.findById(id).map(user -> {
+            try {
+                userRepository.delete(user);
+                userRepository.flush(); // ← force commit ngay, bắt được exception
+                return ResponseEntity.ok(Map.of("message", "Đã xóa người dùng"));
+            } catch (Exception e) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Không thể xóa: tài khoản đang được liên kết với dữ liệu khác"));
+            }
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/stores/{id}/permanent")
+    public ResponseEntity<?> permanentDeleteStore(@PathVariable Integer id) {
+        return storeRepository.findById(id).map(store -> {
+            try {
+                storeRepository.delete(store);
+                storeRepository.flush();
+                return ResponseEntity.ok(Map.of("message", "Đã xóa cửa hàng"));
+            } catch (Exception e) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Không thể xóa: cửa hàng đang có dữ liệu liên quan"));
+            }
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/products/{id}/permanent")
+    public ResponseEntity<?> permanentDeleteProduct(@PathVariable Integer id) {
+        return productRepository.findById(id).map(product -> {
+            try {
+                productRepository.delete(product);
+                productRepository.flush();
+                return ResponseEntity.ok(Map.of("message", "Đã xóa sản phẩm"));
+            } catch (Exception e) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Không thể xóa: sản phẩm đang được sử dụng trong đơn hàng"));
+            }
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/dashboard/low-stock")
     public ResponseEntity<?> getLowStock() {
         return ResponseEntity.ok(inventoryRepository.findLowStockItems());
