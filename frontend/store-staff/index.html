@@ -51,65 +51,65 @@
         </div>
         <hr>
         <h4>Chọn sản phẩm & Số lượng</h4>
-        <div id="product-selection-list" style="max-height: 250px; overflow-y: auto; border: 1px solid #eee; padding: 10px;">
-            </div>
+        <div id="product-selection-list" style="max-height: 250px; overflow-y: auto; border: 1px solid #eee; padding: 10px;"></div>
     </div>
     <footer>
         <button class="btn btn-secondary" onclick="document.getElementById('dlg-order').close()">Hủy</button>
         <button class="btn btn-primary" onclick="submitOrder()">Gửi đơn hàng</button>
     </footer>
 </dialog>
+
 <dialog id="dlg-detail">
-<header><h3>Chi tiết đơn hàng <span id="detail-order-id"></span></h3></header>
-<div class="dialog-body">
-    <p><strong>Trạng thái:</strong> <span id="detail-status"></span></p>
-    <p><strong>Ngày đặt:</strong> <span id="detail-date"></span></p>
-    <table class="table-mini" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-        <thead>
-            <tr style="background: #f4f4f4; text-align: left;">
-                <th style="padding: 8px; border: 1px solid #ddd;">Sản phẩm</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Số lượng</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Đơn vị</th>
-            </tr>
-        </thead>
-        <tbody id="detail-items-body"></tbody>
-    </table>
-</div>
-<footer>
-    <button class="btn btn-secondary" onclick="document.getElementById('dlg-detail').close()">Đóng</button>
-</footer>
+    <header><h3>Chi tiết đơn hàng <span id="detail-order-id"></span></h3></header>
+    <div class="dialog-body">
+        <p><strong>Trạng thái:</strong> <span id="detail-status"></span></p>
+        <p><strong>Ngày đặt:</strong> <span id="detail-date"></span></p>
+        <table class="table-mini" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+                <tr style="background: #f4f4f4; text-align: left;">
+                    <th style="padding: 8px; border: 1px solid #ddd;">Sản phẩm</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">Số lượng</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">Đơn vị</th>
+                </tr>
+            </thead>
+            <tbody id="detail-items-body"></tbody>
+        </table>
+    </div>
+    <footer>
+        <button class="btn btn-secondary" onclick="document.getElementById('dlg-detail').close()">Đóng</button>
+    </footer>
 </dialog>
 
 <dialog id="dlg-feedback">
-<header><h3>Đánh giá chất lượng đơn hàng</h3></header>
-<div class="dialog-body">
-    <input type="hidden" id="fb-order-id">
-    <div class="form-group">
-        <label>Mức độ hài lòng (1-5 sao)</label>
-        <select id="fb-rating" style="width: 100%; padding: 8px;">
-            <option value="5">⭐⭐⭐⭐⭐ Rất tốt</option>
-            <option value="4">⭐⭐⭐⭐ Tốt</option>
-            <option value="3">⭐⭐⭐ Tạm được</option>
-            <option value="2">⭐⭐ Kém</option>
-            <option value="1">⭐ Rất tệ</option>
-        </select>
+    <header><h3>Đánh giá chất lượng đơn hàng</h3></header>
+    <div class="dialog-body">
+        <input type="hidden" id="fb-order-id">
+        <div class="form-group">
+            <label>Mức độ hài lòng (1-5 sao)</label>
+            <select id="fb-rating" style="width: 100%; padding: 8px;">
+                <option value="5">⭐⭐⭐⭐⭐ Rất tốt</option>
+                <option value="4">⭐⭐⭐⭐ Tốt</option>
+                <option value="3">⭐⭐⭐ Tạm được</option>
+                <option value="2">⭐⭐ Kém</option>
+                <option value="1">⭐ Rất tệ</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+            <label>Ý kiến phản hồi</label>
+            <textarea id="fb-comment" placeholder="Nhập nhận xét về sản phẩm, đóng gói..." style="width: 100%; min-height: 80px;"></textarea>
+        </div>
     </div>
-    <div class="form-group" style="margin-top: 15px;">
-        <label>Ý kiến phản hồi</label>
-        <textarea id="fb-comment" placeholder="Nhập nhận xét về sản phẩm, đóng gói..." style="width: 100%; min-height: 80px;"></textarea>
-    </div>
-</div>
-<footer>
-    <button class="btn btn-secondary" onclick="document.getElementById('dlg-feedback').close()">Hủy</button>
-    <button class="btn btn-primary" onclick="submitFeedback()">Gửi đánh giá</button>
-</footer>
+    <footer>
+        <button class="btn btn-secondary" onclick="document.getElementById('dlg-feedback').close()">Hủy</button>
+        <button class="btn btn-primary" onclick="submitFeedback()">Gửi đánh giá</button>
+    </footer>
 </dialog>
 
 <script>
-    const STORE_ID = 2; // Giả định ID cửa hàng hiện tại
-    const USER_ID = 7;  // Giả định ID user đang đăng nhập
+    const STORE_ID = 2;
+    const USER_ID = 7;
 
-    // 1. Tải danh sách đơn hàng của cửa hàng
+    //Tải danh sách đơn hàng
     async function loadOrders() {
         try {
             const response = await fetch(`/api/store-staff/orders/${STORE_ID}`);
@@ -123,8 +123,8 @@
                     <td>${o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString() : '-'}</td>
                     <td><span class="badge badge-status-${o.status.toLowerCase()}">${o.status}</span></td>
                     <td>
-                        <button class="btn btn-sm" onclick="viewOrderDetail(${o.id})">Chi tiết</button>
-                        ${o.status === 'DELIVERED' ? `<button class="btn btn-sm btn-primary" style="margin-left:5px" onclick="openFeedbackModal(${o.id})">Đánh giá</button>` : ''}
+                        <button class="btn btn-sm" onclick="viewDetail(${o.id})">Chi tiết</button>
+                        ${o.status === 'DELIVERED' ? `<button class="btn btn-sm btn-primary" style="margin-left:5px" onclick="openFeedback(${o.id})">Đánh giá</button>` : ''}
                     </td>
                 </tr>
             `).join('');
@@ -133,14 +133,13 @@
         }
     }
 
-    // 2. Mở Modal và tải danh sách sản phẩm động từ Server
+    //Mở Modal đặt hàng
     async function openOrderModal() {
         try {
             const response = await fetch('/api/store-staff/products');
             const products = await response.json();
             const list = document.getElementById('product-selection-list');
             
-            // Render danh sách sản phẩm với ô nhập số lượng
             list.innerHTML = products.map(p => `
                 <div class="product-item" style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;">
                     <span><strong>${p.name}</strong> (${p.unit})</span>
@@ -154,10 +153,9 @@
         }
     }
 
-    // 3. Gửi đơn hàng với dữ liệu đã chọn
+    //Gửi đơn hàng
     async function submitOrder() {
         const items = [];
-        // Lấy tất cả các sản phẩm có nhập số lượng > 0
         document.querySelectorAll('.prod-qty').forEach(input => {
             const qty = parseFloat(input.value);
             if (qty > 0) {
@@ -191,25 +189,13 @@
         if(response.ok) {
             alert("Đặt hàng thành công!");
             document.getElementById('dlg-order').close();
-            // Reset form
-            document.getElementById('delivery-date').value = "";
-            document.getElementById('order-note').value = "";
             loadOrders();
         } else {
-            alert("Gửi đơn hàng thất bại. Vui lòng thử lại.");
+            alert("Gửi đơn hàng thất bại.");
         }
     }
 
-    // Chức năng bổ sung: Xem chi tiết đơn hàng
-    async function viewOrderDetail(orderId) {
-        const response = await fetch(`/api/store-staff/orders/detail/${orderId}`);
-        const detail = await response.json();
-        alert(`Đơn hàng #${detail.id}\nCửa hàng: ${detail.storeName}\nTrạng thái: ${detail.status}\nSố lượng món: ${detail.items.length}`);
-    }
-
-    window.onload = loadOrders;
-
-    // Hàm xem chi tiết đơn hàng
+    //Xem chi tiết
     async function viewDetail(orderId) {
         const response = await fetch(`/api/store-staff/orders/detail/${orderId}`);
         const data = await response.json();
@@ -230,40 +216,38 @@
         document.getElementById('dlg-detail').showModal();
     }
 
-    // Mở modal đánh giá
+    // Đánh giá 
     function openFeedback(orderId) {
         document.getElementById('fb-order-id').value = orderId;
         document.getElementById('fb-comment').value = "";
         document.getElementById('dlg-feedback').showModal();
     }
 
-    // Gửi phản hồi về server
     async function submitFeedback() {
         const orderId = document.getElementById('fb-order-id').value;
         const rating = document.getElementById('fb-rating').value;
         const comment = document.getElementById('fb-comment').value;
 
-        const feedbackData = {
-            delivery: { id: orderId },
-            submittedBy: { id: USER_ID },
-            rating: parseInt(rating),
-            comment: comment
-        };
-
         const response = await fetch('/api/store-staff/feedback', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(feedbackData)
+            body: JSON.stringify({
+                delivery: { id: orderId },
+                submittedBy: { id: USER_ID },
+                rating: parseInt(rating),
+                comment: comment
+            })
         });
 
         if(response.ok) {
             alert("Cảm ơn bạn đã phản hồi!");
             document.getElementById('dlg-feedback').close();
         } else {
-            alert("Không thể gửi phản hồi lúc này.");
+            alert("Không thể gửi phản hồi.");
         }
     }
 
+    window.onload = loadOrders;
 </script>
 </body>
 </html>
