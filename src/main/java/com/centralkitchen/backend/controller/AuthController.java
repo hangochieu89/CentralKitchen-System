@@ -46,6 +46,7 @@ public class AuthController {
             model.addAttribute("error", "Tên đăng nhập hoặc mật khẩu không đúng.");
             return "forward:/login/index.jsp";
         }
+        
 
         // Lưu user vào session (30 phút timeout)
         session.setAttribute("currentUser", user);

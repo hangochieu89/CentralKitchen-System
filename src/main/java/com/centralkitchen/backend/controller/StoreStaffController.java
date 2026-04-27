@@ -1,6 +1,7 @@
 package com.centralkitchen.backend.controller;
 
 import com.centralkitchen.backend.dto.OrderRequest;
+import com.centralkitchen.backend.dto.OrderSummaryDTO;
 import com.centralkitchen.backend.entity.*;
 import com.centralkitchen.backend.service.StoreStaffService;
 import lombok.RequiredArgsConstructor;
@@ -39,5 +40,17 @@ public class StoreStaffController {
     @PostMapping("/feedback")
     public ResponseEntity<QualityFeedback> postFeedback(@RequestBody QualityFeedback feedback) {
         return ResponseEntity.ok(storeStaffService.submitFeedback(feedback));
+    }
+
+    // Lấy danh sách sản phẩm để chọn khi đặt hàng
+    @GetMapping("/products")
+    public ResponseEntity<List<Product>> getAllProducts() {
+        return ResponseEntity.ok(storeStaffService.getAllProducts());
+    }
+
+    // Xem chi tiết một đơn hàng cụ thể
+    @GetMapping("/orders/detail/{orderId}")
+    public ResponseEntity<OrderSummaryDTO> getOrderDetails(@PathVariable Integer orderId) {
+        return ResponseEntity.ok(storeStaffService.getOrderDetails(orderId));
     }
 }

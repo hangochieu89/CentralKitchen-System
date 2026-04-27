@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Cửa hàng Franchise - Đặt hàng & Tồn kho</title>
-    <link rel="stylesheet" href="../css/kitchen-staff-styles.css"> </head>
+    <link rel="stylesheet" href="../css/kitchen-staff-styles.css">
+</head>
 <body>
 <header>
     <div class="brand">Store Management</div>
@@ -31,8 +32,7 @@
                         <th>Thao tác</th>
                     </tr>
                 </thead>
-                <tbody>
-                    </tbody>
+                <tbody></tbody>
             </table>
         </div>
     </section>
@@ -45,7 +45,13 @@
             <label>Ngày mong muốn nhận</label>
             <input type="datetime-local" id="delivery-date">
         </div>
-        <div id="product-selection-list">
+        <div class="form-group">
+            <label>Ghi chú đơn hàng</label>
+            <textarea id="order-note" placeholder="Ví dụ: Giao trước 8h sáng..." style="width: 100%; margin-top: 5px;"></textarea>
+        </div>
+        <hr>
+        <h4>Chọn sản phẩm & Số lượng</h4>
+        <div id="product-selection-list" style="max-height: 250px; overflow-y: auto; border: 1px solid #eee; padding: 10px;">
             </div>
     </div>
     <footer>
@@ -53,34 +59,127 @@
         <button class="btn btn-primary" onclick="submitOrder()">Gửi đơn hàng</button>
     </footer>
 </dialog>
+<dialog id="dlg-detail">
+<header><h3>Chi tiết đơn hàng <span id="detail-order-id"></span></h3></header>
+<div class="dialog-body">
+    <p><strong>Trạng thái:</strong> <span id="detail-status"></span></p>
+    <p><strong>Ngày đặt:</strong> <span id="detail-date"></span></p>
+    <table class="table-mini" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <thead>
+            <tr style="background: #f4f4f4; text-align: left;">
+                <th style="padding: 8px; border: 1px solid #ddd;">Sản phẩm</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Số lượng</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Đơn vị</th>
+            </tr>
+        </thead>
+        <tbody id="detail-items-body"></tbody>
+    </table>
+</div>
+<footer>
+    <button class="btn btn-secondary" onclick="document.getElementById('dlg-detail').close()">Đóng</button>
+</footer>
+</dialog>
+
+<dialog id="dlg-feedback">
+<header><h3>Đánh giá chất lượng đơn hàng</h3></header>
+<div class="dialog-body">
+    <input type="hidden" id="fb-order-id">
+    <div class="form-group">
+        <label>Mức độ hài lòng (1-5 sao)</label>
+        <select id="fb-rating" style="width: 100%; padding: 8px;">
+            <option value="5">⭐⭐⭐⭐⭐ Rất tốt</option>
+            <option value="4">⭐⭐⭐⭐ Tốt</option>
+            <option value="3">⭐⭐⭐ Tạm được</option>
+            <option value="2">⭐⭐ Kém</option>
+            <option value="1">⭐ Rất tệ</option>
+        </select>
+    </div>
+    <div class="form-group" style="margin-top: 15px;">
+        <label>Ý kiến phản hồi</label>
+        <textarea id="fb-comment" placeholder="Nhập nhận xét về sản phẩm, đóng gói..." style="width: 100%; min-height: 80px;"></textarea>
+    </div>
+</div>
+<footer>
+    <button class="btn btn-secondary" onclick="document.getElementById('dlg-feedback').close()">Hủy</button>
+    <button class="btn btn-primary" onclick="submitFeedback()">Gửi đánh giá</button>
+</footer>
+</dialog>
 
 <script>
     const STORE_ID = 2; // Giả định ID cửa hàng hiện tại
     const USER_ID = 7;  // Giả định ID user đang đăng nhập
 
+    // 1. Tải danh sách đơn hàng của cửa hàng
     async function loadOrders() {
-        const response = await fetch(`/api/store-staff/orders/${STORE_ID}`);
-        const orders = await response.json();
-        const tbody = document.querySelector("#order-table tbody");
-        tbody.innerHTML = orders.map(o => `
-            <tr>
-                <td>#ORD-${o.id}</td>
-                <td>${new Date(o.orderDate).toLocaleString()}</td>
-                <td>${o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString() : '-'}</td>
-                <td><span class="badge badge-pending">${o.status}</span></td>
-                <td><button class="btn btn-sm">Chi tiết</button></td>
-            </tr>
-        `).join('');
+        try {
+            const response = await fetch(`/api/store-staff/orders/${STORE_ID}`);
+            const orders = await response.json();
+            const tbody = document.querySelector("#order-table tbody");
+            
+            tbody.innerHTML = orders.map(o => `
+                <tr>
+                    <td>#ORD-${o.id}</td>
+                    <td>${new Date(o.orderDate).toLocaleString()}</td>
+                    <td>${o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString() : '-'}</td>
+                    <td><span class="badge badge-status-${o.status.toLowerCase()}">${o.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm" onclick="viewOrderDetail(${o.id})">Chi tiết</button>
+                        ${o.status === 'DELIVERED' ? `<button class="btn btn-sm btn-primary" style="margin-left:5px" onclick="openFeedbackModal(${o.id})">Đánh giá</button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error("Lỗi tải đơn hàng:", error);
+        }
     }
 
+    // 2. Mở Modal và tải danh sách sản phẩm động từ Server
+    async function openOrderModal() {
+        try {
+            const response = await fetch('/api/store-staff/products');
+            const products = await response.json();
+            const list = document.getElementById('product-selection-list');
+            
+            // Render danh sách sản phẩm với ô nhập số lượng
+            list.innerHTML = products.map(p => `
+                <div class="product-item" style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;">
+                    <span><strong>${p.name}</strong> (${p.unit})</span>
+                    <input type="number" class="prod-qty" data-id="${p.id}" placeholder="SL" style="width: 70px;" min="0">
+                </div>
+            `).join('');
+            
+            document.getElementById('dlg-order').showModal();
+        } catch (error) {
+            alert("Không thể tải danh sách sản phẩm.");
+        }
+    }
+
+    // 3. Gửi đơn hàng với dữ liệu đã chọn
     async function submitOrder() {
+        const items = [];
+        // Lấy tất cả các sản phẩm có nhập số lượng > 0
+        document.querySelectorAll('.prod-qty').forEach(input => {
+            const qty = parseFloat(input.value);
+            if (qty > 0) {
+                items.push({
+                    productId: parseInt(input.dataset.id),
+                    quantity: qty,
+                    note: ""
+                });
+            }
+        });
+
+        if (items.length === 0) {
+            alert("Vui lòng nhập số lượng cho ít nhất một sản phẩm!");
+            return;
+        }
+
         const data = {
             storeId: STORE_ID,
             userId: USER_ID,
             deliveryDate: document.getElementById('delivery-date').value,
-            items: [
-                { productId: 1, quantity: 10.0, note: "Cần gấp" } // Demo tĩnh
-            ]
+            note: document.getElementById('order-note').value,
+            items: items
         };
 
         const response = await fetch('/api/store-staff/orders', {
@@ -92,11 +191,79 @@
         if(response.ok) {
             alert("Đặt hàng thành công!");
             document.getElementById('dlg-order').close();
+            // Reset form
+            document.getElementById('delivery-date').value = "";
+            document.getElementById('order-note').value = "";
             loadOrders();
+        } else {
+            alert("Gửi đơn hàng thất bại. Vui lòng thử lại.");
         }
     }
 
+    // Chức năng bổ sung: Xem chi tiết đơn hàng
+    async function viewOrderDetail(orderId) {
+        const response = await fetch(`/api/store-staff/orders/detail/${orderId}`);
+        const detail = await response.json();
+        alert(`Đơn hàng #${detail.id}\nCửa hàng: ${detail.storeName}\nTrạng thái: ${detail.status}\nSố lượng món: ${detail.items.length}`);
+    }
+
     window.onload = loadOrders;
+
+    // Hàm xem chi tiết đơn hàng
+    async function viewDetail(orderId) {
+        const response = await fetch(`/api/store-staff/orders/detail/${orderId}`);
+        const data = await response.json();
+
+        document.getElementById('detail-order-id').innerText = `#ORD-${data.id}`;
+        document.getElementById('detail-status').innerText = data.status;
+        document.getElementById('detail-date').innerText = new Date(data.orderDate).toLocaleString();
+
+        const tbody = document.getElementById('detail-items-body');
+        tbody.innerHTML = data.items.map(item => `
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;">${item.productName}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${item.quantity}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${item.productUnit}</td>
+            </tr>
+        `).join('');
+
+        document.getElementById('dlg-detail').showModal();
+    }
+
+    // Mở modal đánh giá
+    function openFeedback(orderId) {
+        document.getElementById('fb-order-id').value = orderId;
+        document.getElementById('fb-comment').value = "";
+        document.getElementById('dlg-feedback').showModal();
+    }
+
+    // Gửi phản hồi về server
+    async function submitFeedback() {
+        const orderId = document.getElementById('fb-order-id').value;
+        const rating = document.getElementById('fb-rating').value;
+        const comment = document.getElementById('fb-comment').value;
+
+        const feedbackData = {
+            delivery: { id: orderId },
+            submittedBy: { id: USER_ID },
+            rating: parseInt(rating),
+            comment: comment
+        };
+
+        const response = await fetch('/api/store-staff/feedback', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(feedbackData)
+        });
+
+        if(response.ok) {
+            alert("Cảm ơn bạn đã phản hồi!");
+            document.getElementById('dlg-feedback').close();
+        } else {
+            alert("Không thể gửi phản hồi lúc này.");
+        }
+    }
+
 </script>
 </body>
 </html>
