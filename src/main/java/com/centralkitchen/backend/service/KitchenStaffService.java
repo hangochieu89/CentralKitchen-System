@@ -50,4 +50,15 @@ public class KitchenStaffService {
     public List<GoodsReceiptDetail> getAllGoodsReceiptDetails() {
         return goodsReceiptDetailRepository.findAll();
     }
+
+    public List<Inventory> getCentralKitchenInventories() {
+        return inventoryRepository.findByStoreType("CENTRAL_KITCHEN");
+    }
+
+    public void updateOrderStatus(Integer id, String status) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng: " + id));
+        order.setStatus(status);
+        orderRepository.save(order);
+    }
 }

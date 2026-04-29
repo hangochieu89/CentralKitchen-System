@@ -18,15 +18,15 @@
 <header>
   <div class="brand">
     <div class="logo-mark">🍳</div>
-    Hệ thống Quản lý Bếp Trung Tâm và Cửa hàng
+    Hệ thống Quản lý Bếp Trung Tâm
   </div>
   <nav class="top-nav" aria-label="Top navigation">
-    <button>Thông báo <span style="background:#e05c2a;color:#fff;padding:1px 6px;border-radius:10px;font-size:.68rem;margin-left:2px">4</span></button>
+    <button>🔔 Thông báo <span style="background:var(--accent);color:#fff;padding:1px 6px;border-radius:10px;font-size:.68rem;margin-left:2px">4</span></button>
     <button>Hỗ trợ</button>
   </nav>
   <div class="user-chip">
     <div class="avatar">NK</div>
-    <span>Đình Phát  &mdash; <span style="color:#e05c2a">Bếp Trung Tâm</span></span>
+    <span>Đình Phát &mdash; <span style="color:var(--accent);font-weight:600;">Bếp Trung Tâm</span></span>
   </div>
 </header>
 
@@ -42,7 +42,13 @@
   <span class="nav-section-label">Đơn hàng</span>
   <a href="#orders" onclick="showPage('orders',this)">
     <span class="icon">📋</span> Tiếp nhận đơn
-    <span class="badge">7</span>
+    <span class="badge" id="badge-pending">
+      <c:set var="pc" value="0"/>
+      <c:forEach items="${orders}" var="o">
+        <c:if test="${o.status == 'PENDING'}"><c:set var="pc" value="${pc+1}"/></c:if>
+      </c:forEach>
+      ${pc}
+    </span>
   </a>
   <a href="#dispatch" onclick="showPage('dispatch',this)">
     <span class="icon">🚚</span> Xuất kho &amp; Giao hàng
@@ -71,71 +77,56 @@
 <main>
 
   <jsp:include page="dashboard.jsp" />
-
   <jsp:include page="orders.jsp" />
-
   <jsp:include page="production.jsp" />
-
   <jsp:include page="batches.jsp" />
-
   <jsp:include page="inventory.jsp" />
-
   <jsp:include page="inputs.jsp" />
-
   <jsp:include page="dispatch.jsp" />
 
-</main><!-- /main -->
-
+</main>
 
 <!-- ════════════════════════════════════════════════════════
      DIALOGS / MODALS
 ════════════════════════════════════════════════════════ -->
 
-<!-- Modal: Xử lý đơn hàng -->
+<!-- Modal: Chi tiết & xử lý đơn hàng -->
 <dialog id="dlg-order">
   <header>
-    <h3>Xử lý đơn hàng #ORD-2341</h3>
+    <h3 id="dlg-order-title">Chi tiết đơn hàng</h3>
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('dlg-order').close()">✕</button>
   </header>
   <div class="dialog-body">
-    <fieldset>
-      <legend>Thông tin đơn</legend>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Cửa hàng</label>
-          <input type="text" value="CH Quận 1" readonly style="background:var(--gray-50);" />
-        </div>
-        <div class="form-group">
-          <label>Thời gian cần nhận</label>
-          <input type="text" value="18/03 13:00" readonly style="background:var(--gray-50);" />
-        </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="dlg-store">Cửa hàng</label>
+        <input id="dlg-store" type="text" readonly style="background:var(--gray-50);" />
       </div>
-    </fieldset>
-    <fieldset>
-      <legend>Phân công sản xuất</legend>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="assign-staff">Nhân sự phụ trách</label>
-          <select id="assign-staff">
-            <option>Trần Văn A</option>
-            <option>Lê Thị B</option>
-            <option>Nguyễn Văn C</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="assign-eta">Thời gian dự kiến xong</label>
-          <input id="assign-eta" type="datetime-local" value="2026-03-18T12:00" />
-        </div>
-        <div class="form-group full">
-          <label for="assign-note">Ghi chú</label>
-          <textarea id="assign-note" rows="2" placeholder="Lưu ý khi sản xuất…"></textarea>
-        </div>
+      <div class="form-group">
+        <label for="dlg-status">Trạng thái hiện tại</label>
+        <input id="dlg-status" type="text" readonly style="background:var(--gray-50);" />
       </div>
-    </fieldset>
+      <div class="form-group">
+        <label for="dlg-date">Ngày đặt</label>
+        <input id="dlg-date" type="text" readonly style="background:var(--gray-50);" />
+      </div>
+      <div class="form-group">
+        <label for="dlg-delivery">Thời gian giao</label>
+        <input id="dlg-delivery" type="text" readonly style="background:var(--gray-50);" />
+      </div>
+    </div>
+    <div>
+      <p style="font-size:.78rem;font-weight:600;color:var(--gray-600);margin-bottom:8px;">Danh sách sản phẩm</p>
+      <div id="dlg-items" class="item-list"></div>
+    </div>
+    <div class="form-group">
+      <label for="dlg-note">Ghi chú</label>
+      <textarea id="dlg-note" rows="2" readonly style="background:var(--gray-50);resize:none;"></textarea>
+    </div>
   </div>
   <footer>
-    <button class="btn btn-secondary" onclick="document.getElementById('dlg-order').close()">Hủy</button>
-    <button class="btn btn-primary" onclick="document.getElementById('dlg-order').close()">✓ Xác nhận xử lý</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('dlg-order').close()">Đóng</button>
+    <button class="btn btn-primary" id="dlg-confirm-btn" onclick="confirmOrderFromDialog()" style="display:none;">✓ Xác nhận</button>
   </footer>
 </dialog>
 
@@ -171,7 +162,7 @@
       </div>
       <div class="form-group">
         <label for="plan-date">Ngày sản xuất</label>
-        <input id="plan-date" type="date" value="2026-03-18" />
+        <input id="plan-date" type="date" />
       </div>
       <div class="form-group full">
         <label for="plan-remark">Ghi chú</label>
@@ -231,10 +222,14 @@
   </footer>
 </dialog>
 
+<!-- Toast notification -->
+<div id="status-toast"></div>
+
 <!-- ════════════════════════════════════════════════════════
-     JS – Page Navigation
+     JS – Shared utilities & Page Navigation
 ════════════════════════════════════════════════════════ -->
 <script>
+  // ── Page map ─────────────────────────────────────────────
   const pages = {
     dashboard:  'page-dashboard',
     orders:     'page-orders',
@@ -246,27 +241,130 @@
   };
 
   function showPage(id, el) {
-    // Hide all pages
     Object.values(pages).forEach(p => {
-      const el = document.getElementById(p);
-      if (el) el.style.display = 'none';
+      const node = document.getElementById(p);
+      if (node) node.style.display = 'none';
     });
-    // Show target
     const target = document.getElementById(pages[id]);
-    if (target) target.style.display = 'flex', target.style.flexDirection = 'column', target.style.gap = '24px';
-
-    // Update active nav
+    if (target) { target.style.display = 'flex'; target.style.flexDirection = 'column'; target.style.gap = '24px'; }
     document.querySelectorAll('nav.sidebar a').forEach(a => a.classList.remove('active'));
     if (el) el.classList.add('active');
-
-    if (el) { el.preventDefault && el.preventDefault(); }
+    if (el && el.preventDefault) el.preventDefault();
     return false;
   }
 
-  // Init
   document.addEventListener('DOMContentLoaded', () => {
     showPage('dashboard', document.querySelector('nav.sidebar a.active'));
   });
+
+  // ── Status helpers ────────────────────────────────────────
+  function getStatusLabel(status) {
+    const map = {
+      PENDING:       'Chờ xử lý',
+      CONFIRMED:     'Đã xác nhận',
+      IN_PRODUCTION: 'Đang sản xuất',
+      READY:         'Sẵn sàng giao',
+      DELIVERING:    'Đang giao',
+      DELIVERED:     'Đã giao',
+      CANCELLED:     'Đã hủy'
+    };
+    return map[status] || status;
+  }
+
+  function getStatusBadge(status) {
+    const cls = {
+      PENDING: 'badge-pending', CONFIRMED: 'badge-process',
+      IN_PRODUCTION: 'badge-process', READY: 'badge-done',
+      DELIVERING: 'badge-process', DELIVERED: 'badge-done',
+      CANCELLED: 'badge-alert'
+    };
+    return '<span class="badge ' + (cls[status] || 'badge-default') + '">' + getStatusLabel(status) + '</span>';
+  }
+
+  // ── Toast notification ────────────────────────────────────
+  function showToast(msg, isError) {
+    const t = document.getElementById('status-toast');
+    t.textContent = msg;
+    t.style.background = isError ? 'var(--red)' : 'var(--green)';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── Update order status via AJAX ──────────────────────────
+  async function updateOrderStatus(orderId, newStatus) {
+    try {
+      const resp = await fetch('/kitchen-staff/orders/' + orderId + '/status?status=' + newStatus, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (resp.ok) {
+        showToast('Đã cập nhật trạng thái đơn #ORD-' + orderId + ' → ' + getStatusLabel(newStatus));
+        setTimeout(() => location.reload(), 900);
+      } else {
+        showToast('Lỗi cập nhật. Vui lòng thử lại.', true);
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối: ' + e.message, true);
+    }
+  }
+
+  // ── Open order dialog (from dashboard) ───────────────────
+  function openOrderDialog(oid) {
+    const dataRow = document.getElementById('order-data-' + oid);
+    if (!dataRow) { alert('Không tìm thấy dữ liệu đơn hàng.'); return; }
+
+    const store    = dataRow.dataset.store;
+    const date     = dataRow.dataset.date;
+    const delivery = dataRow.dataset.delivery;
+    const status   = dataRow.dataset.status;
+    const note     = dataRow.dataset.note;
+    const items    = dataRow.querySelectorAll('.order-item-entry');
+
+    document.getElementById('dlg-order-title').textContent = 'Đơn hàng #ORD-' + oid;
+    document.getElementById('dlg-store').value   = store;
+    document.getElementById('dlg-date').value    = date || '—';
+    document.getElementById('dlg-delivery').value = delivery || 'Chưa xác định';
+    document.getElementById('dlg-status').value  = getStatusLabel(status);
+    document.getElementById('dlg-note').value    = note || '';
+
+    const itemsEl = document.getElementById('dlg-items');
+    if (items.length === 0) {
+      itemsEl.innerHTML = '<div class="item-row"><span class="text-muted">Không có sản phẩm.</span></div>';
+    } else {
+      itemsEl.innerHTML = '';
+      items.forEach(item => {
+        itemsEl.innerHTML +=
+          '<div class="item-row">' +
+            '<span class="item-name">' + item.dataset.name + '</span>' +
+            '<span class="item-qty">' + item.dataset.qty + ' ' + item.dataset.unit + '</span>' +
+          '</div>';
+      });
+    }
+
+    // Nút xác nhận theo trạng thái
+    const nextStatus = { PENDING: 'CONFIRMED', CONFIRMED: 'IN_PRODUCTION', IN_PRODUCTION: 'READY' };
+    const btnLabels  = { PENDING: '✓ Xác nhận đơn', CONFIRMED: '▶ Bắt đầu SX', IN_PRODUCTION: '✅ Sẵn sàng' };
+    const btn = document.getElementById('dlg-confirm-btn');
+    if (nextStatus[status]) {
+      btn.style.display = '';
+      btn.textContent   = btnLabels[status];
+      btn.dataset.oid   = oid;
+      btn.dataset.next  = nextStatus[status];
+    } else {
+      btn.style.display = 'none';
+    }
+
+    document.getElementById('dlg-order').showModal();
+  }
+
+  async function confirmOrderFromDialog() {
+    const btn  = document.getElementById('dlg-confirm-btn');
+    const oid  = btn.dataset.oid;
+    const next = btn.dataset.next;
+    if (!oid || !next) return;
+    document.getElementById('dlg-order').close();
+    await updateOrderStatus(parseInt(oid), next);
+  }
 </script>
 </body>
 </html>

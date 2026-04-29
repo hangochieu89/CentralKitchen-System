@@ -37,7 +37,7 @@
               <td><span class="mono">${batch.manufactureDate}</span></td>
               <td><span class="expiry">${batch.expirationDate}</span></td>
               <td><span class="mono">${batch.quantityRemaining} ${batch.product.unit}</span></td>
-              <td>Thành phần N/A</td>
+              <td>Thành phần liên quan (${batch.product.name})</td>
               <td>${batch.store.name}</td>
               <td><span class="badge ${batch.quantityRemaining > 0 ? 'badge-process' : 'badge-done'}">${batch.quantityRemaining > 0 ? 'Sẵn sàng' : 'Hết lô'}</span></td>
             </tr>

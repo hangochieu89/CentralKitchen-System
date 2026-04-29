@@ -47,8 +47,8 @@
     /* ─── HEADER ───────────────────────────────────────────── */
     header {
       grid-area: header;
-      background: var(--black);
-      color: var(--white);
+      background: var(--white);
+      color: var(--black);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -57,6 +57,7 @@
       top: 0;
       z-index: 100;
       border-bottom: 2px solid var(--accent);
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
     }
     header .brand {
       display: flex;
@@ -66,6 +67,7 @@
       font-size: .95rem;
       font-weight: 500;
       letter-spacing: .04em;
+      color: var(--black);
     }
     header .brand .logo-mark {
       width: 28px; height: 28px;
@@ -74,6 +76,7 @@
       display: grid;
       place-items: center;
       font-size: 1rem;
+      color: var(--white);
     }
     header nav.top-nav {
       display: flex;
@@ -83,7 +86,7 @@
     header nav.top-nav button {
       background: none;
       border: none;
-      color: var(--gray-400);
+      color: var(--gray-600);
       font-family: var(--font-sans);
       font-size: .82rem;
       padding: 5px 12px;
@@ -91,13 +94,13 @@
       cursor: pointer;
       transition: background .15s, color .15s;
     }
-    header nav.top-nav button:hover { background: rgba(255,255,255,.08); color: var(--white); }
+    header nav.top-nav button:hover { background: var(--gray-100); color: var(--black); }
     header .user-chip {
       display: flex;
       align-items: center;
       gap: 8px;
       font-size: .82rem;
-      color: var(--gray-400);
+      color: var(--gray-600);
     }
     header .user-chip .avatar {
       width: 30px; height: 30px;
@@ -290,6 +293,7 @@
       font-size: .92rem;
       font-weight: 700;
       letter-spacing: -.01em;
+      color: var(--black);
     }
     section.panel header.panel-head .panel-actions { display: flex; gap: 6px; }
 
@@ -369,7 +373,8 @@
     /* ─── ORDER DETAIL SIDE ────────────────────────────────── */
     .order-detail { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
     .order-detail .field { display: flex; flex-direction: column; gap: 3px; }
-    .order-detail .field label { font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gray-400); }
+    .order-detail .field label,
+    .order-detail .field .field-label { font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gray-400); display: block; }
     .order-detail .field p { font-size: .87rem; color: var(--black); }
     .order-detail .field .mono { font-family: var(--font-mono); }
     hr.divider { border: none; border-top: 1px solid var(--gray-100); }
@@ -573,6 +578,7 @@
       box-shadow: 0 8px 40px rgba(0,0,0,.18);
       max-width: 540px;
       width: 100%;
+      margin: auto;
     }
     dialog::backdrop { background: rgba(0,0,0,.35); }
     dialog header {
@@ -591,6 +597,26 @@
       padding: 14px 20px;
       border-top: 1px solid var(--gray-100);
     }
+
+    /* ─── ORDER ROW SELECTION ──────────────────────────────── */
+    tr.order-row { cursor: pointer; }
+    tr.order-row.row-selected { background: var(--accent-lt) !important; }
+    tr.order-row.row-selected td { color: var(--black); }
+
+    /* ─── DETAIL PANEL ACTIONS ─────────────────────────────── */
+    .detail-action-bar { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--gray-100); }
+
+    /* ─── STATUS TOAST ─────────────────────────────────────── */
+    #status-toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--green); color: var(--white);
+      padding: 10px 18px; border-radius: var(--radius);
+      font-size: .85rem; font-weight: 500;
+      box-shadow: 0 4px 16px rgba(0,0,0,.18);
+      opacity: 0; transition: opacity .3s;
+      z-index: 9999; pointer-events: none;
+    }
+    #status-toast.show { opacity: 1; }
 
     /* ─── MISC ─────────────────────────────────────────────── */
     .flex-between { display: flex; align-items: center; justify-content: space-between; }

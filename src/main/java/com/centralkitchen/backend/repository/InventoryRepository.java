@@ -23,4 +23,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, Integer> {
     // Cảnh báo tồn kho thấp của 1 cửa hàng cụ thể
     @Query("SELECT i FROM Inventory i WHERE i.store.id = :storeId AND i.quantity < i.minThreshold")
     List<Inventory> findLowStockByStore(Integer storeId);
+
+    // Tồn kho theo loại cửa hàng (VD: CENTRAL_KITCHEN)
+    List<Inventory> findByStoreType(String type);
 }

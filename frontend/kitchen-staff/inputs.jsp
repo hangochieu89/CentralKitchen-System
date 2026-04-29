@@ -43,39 +43,12 @@
       </section>
 
       <!-- Lịch sử nhập kho -->
-      <section class="panel">
+      <section class="panel" style="opacity:0.6; pointer-events:none;">
         <header class="panel-head"><h2>Lịch sử hoạt động hôm nay</h2></header>
-        <ol class="timeline">
+        <ol class="timeline" style="margin:20px;">
           <li>
-            <div class="dot done">✓</div>
             <div class="t-body">
-              <div class="t-title">Nhập thịt heo xay — Vissan</div>
-              <div class="t-time">08:30 — 12 kg</div>
-              <div class="t-desc">Phiếu nhập #PN-0412, QC đạt</div>
-            </div>
-          </li>
-          <li>
-            <div class="dot done">✓</div>
-            <div class="t-body">
-              <div class="t-title">Xuất kho nước dùng — CH Bình Thạnh</div>
-              <div class="t-time">09:00 — 30L</div>
-              <div class="t-desc">Đơn #ORD-2340 được xuất</div>
-            </div>
-          </li>
-          <li>
-            <div class="dot active">→</div>
-            <div class="t-body">
-              <div class="t-title">Đang SX: Phở bò Lô #L241</div>
-              <div class="t-time">09:15 — Tiến độ 70%</div>
-              <div class="t-desc">Dự kiến hoàn thành 10:30</div>
-            </div>
-          </li>
-          <li>
-            <div class="dot">○</div>
-            <div class="t-body">
-              <div class="t-title">Cần bổ sung: Thịt bò, Sả tươi</div>
-              <div class="t-time">Chờ phê duyệt</div>
-              <div class="t-desc">Yêu cầu #YC-088 đã gửi điều phối</div>
+              <div class="text-muted">Tính năng đang cập nhật...</div>
             </div>
           </li>
         </ol>

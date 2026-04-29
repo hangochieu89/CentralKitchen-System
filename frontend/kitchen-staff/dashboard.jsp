@@ -9,36 +9,61 @@
         <p>Thứ Tư, 18 tháng 3 năm 2026 &mdash; Ca sáng</p>
       </hgroup>
       <div class="actions">
-        <button class="btn btn-secondary">⬇ Xuất báo cáo</button>
         <button class="btn btn-primary" onclick="document.getElementById('dlg-plan').showModal()">+ Tạo kế hoạch SX</button>
       </div>
     </div>
 
     <!-- Stats -->
     <div class="stats-grid">
+      <c:set var="pendingOrders" value="0" />
+      <c:set var="inProductionPlans" value="0" />
+      <c:set var="readyOrders" value="0" />
+      <c:set var="lowInventories" value="0" />
+
+      <c:forEach items="${orders}" var="order">
+        <c:if test="${order.status == 'PENDING'}">
+          <c:set var="pendingOrders" value="${pendingOrders + 1}" />
+        </c:if>
+        <c:if test="${order.status == 'READY'}">
+          <c:set var="readyOrders" value="${readyOrders + 1}" />
+        </c:if>
+      </c:forEach>
+
+      <c:forEach items="${plans}" var="plan">
+        <c:if test="${plan.status == 'IN_PROGRESS'}">
+          <c:set var="inProductionPlans" value="${inProductionPlans + 1}" />
+        </c:if>
+      </c:forEach>
+
+      <c:forEach items="${inventories}" var="inv">
+        <c:if test="${inv.quantity < inv.minThreshold}">
+          <c:set var="lowInventories" value="${lowInventories + 1}" />
+        </c:if>
+      </c:forEach>
+
       <article class="stat-card c-orange">
         <div class="stat-icon">📋</div>
         <div class="stat-label">Đơn chờ xử lý</div>
-        <div class="stat-value">7</div>
-        <div class="stat-sub">3 ưu tiên cao</div>
+        <div class="stat-value">${pendingOrders}</div>
+        <div class="stat-sub">Vừa cập nhật</div>
       </article>
       <article class="stat-card c-blue">
         <div class="stat-icon">⚙️</div>
         <div class="stat-label">Đang sản xuất</div>
-        <div class="stat-value">4</div>
-        <div class="stat-sub">2 lô hoàn thành hôm nay</div>
+        <div class="stat-value">${inProductionPlans}</div>
+        <div class="stat-sub">Đang thực hiện</div>
       </article>
       <article class="stat-card c-green">
         <div class="stat-icon">🚚</div>
         <div class="stat-label">Sẵn sàng giao</div>
-        <div class="stat-value">12</div>
-        <div class="stat-sub">Đợt giao 14:00</div>
+        <div class="stat-value">${readyOrders}</div>
+        <div class="stat-sub">Chờ xuất kho</div>
       </article>
       <article class="stat-card c-amber">
         <div class="stat-icon">⚠️</div>
-        <div class="stat-label">Nguyên liệu sắp hết</div>
-        <div class="stat-value">3</div>
-        <div class="stat-sub">Cần bổ sung hôm nay</div>
+        <div class="stat-label">Tồn kho thấp</div>
+        <div class="stat-value">${lowInventories}</div>
+        <div class="stat-sub">Cần bổ sung</div>
       </article>
     </div>
 
@@ -58,19 +83,17 @@
               <tr>
                 <th>Mã đơn</th>
                 <th>Cửa hàng</th>
-                <th>Sản phẩm</th>
-                <th>Thời gian</th>
+                <th>Ngày đặt</th>
                 <th>Trạng thái</th>
                 <th></th>
               </tr>
             </thead>
-            <tbody id="dashboard-orders">
+            <tbody>
               <c:forEach items="${orders}" var="order" end="4">
               <tr>
                 <td><span class="mono">#ORD-${order.id}</span></td>
                 <td>${order.store.name}</td>
-                <td>Đơn hàng</td>
-                <td class="text-muted">${order.orderDate}</td>
+                <td class="text-muted">${order.orderDate.toLocalDate()} ${order.orderDate.toLocalTime()}</td>
                 <td>
                   <c:choose>
                     <c:when test="${order.status == 'PENDING'}"><span class="badge badge-pending">Chờ xử lý</span></c:when>
@@ -82,7 +105,7 @@
                     <c:otherwise><span class="badge badge-alert">Đã hủy</span></c:otherwise>
                   </c:choose>
                 </td>
-                <td><button class="btn btn-ghost btn-sm" onclick="document.getElementById('dlg-order').showModal()">Chi tiết</button></td>
+                <td><button class="btn btn-ghost btn-sm" onclick="openOrderDialog(${order.id})">Chi tiết</button></td>
               </tr>
               </c:forEach>
             </tbody>
@@ -96,28 +119,52 @@
         <section class="panel">
           <header class="panel-head"><h2>⚙️ Tiến độ hôm nay</h2></header>
           <div style="padding:16px 20px;display:flex;flex-direction:column;gap:14px;">
-            <c:forEach items="${plans}" var="plan" end="3">
-            <div class="progress-wrap">
-              <div class="prog-label"><span>Kế hoạch SX cho đơn #ORD-${plan.order.id}</span><span>${plan.status}</span></div>
-              <progress class="${plan.status == 'COMPLETED' ? 'green' : (plan.status == 'IN_PROGRESS' ? 'amber' : '')}" value="${plan.status == 'COMPLETED' ? 100 : (plan.status == 'IN_PROGRESS' ? 50 : 0)}" max="100"></progress>
-              <span class="text-muted" style="font-size:.73rem;">Phân công: ${plan.assignedTo != null ? plan.assignedTo.fullName : 'Chưa CC'}</span>
-            </div>
-            </c:forEach>
+            <c:choose>
+              <c:when test="${empty plans}">
+                <div class="empty-state" style="padding:20px 0;">
+                  <div class="empty-icon">📋</div>
+                  Chưa có kế hoạch sản xuất nào.
+                </div>
+              </c:when>
+              <c:otherwise>
+                <c:forEach items="${plans}" var="plan" end="3">
+                <div class="progress-wrap">
+                  <div class="prog-label">
+                    <span>Đơn #ORD-${plan.order.id}</span>
+                    <span class="badge ${plan.status == 'COMPLETED' ? 'badge-done' : (plan.status == 'IN_PROGRESS' ? 'badge-process' : 'badge-pending')}" style="font-size:.68rem;">
+                      ${plan.status == 'COMPLETED' ? 'Hoàn thành' : (plan.status == 'IN_PROGRESS' ? 'Đang SX' : 'Chờ')}
+                    </span>
+                  </div>
+                  <progress class="${plan.status == 'COMPLETED' ? 'green' : (plan.status == 'IN_PROGRESS' ? 'amber' : '')}"
+                            value="${plan.status == 'COMPLETED' ? 100 : (plan.status == 'IN_PROGRESS' ? 50 : 0)}" max="100"></progress>
+                  <span class="text-muted" style="font-size:.73rem;">Phân công: ${plan.assignedTo != null ? plan.assignedTo.fullName : 'Chưa phân công'}</span>
+                </div>
+                </c:forEach>
+              </c:otherwise>
+            </c:choose>
           </div>
         </section>
 
-        <!-- Cảnh báo -->
+        <!-- Cảnh báo tồn kho -->
         <section class="panel">
           <header class="panel-head"><h2>⚠️ Cảnh báo tồn kho</h2></header>
           <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
+            <c:set var="hasLow" value="false" />
             <c:forEach items="${inventories}" var="inv">
               <c:if test="${inv.quantity < inv.minThreshold}">
-              <div class="item-row" style="padding:10px 12px;background:var(--red-lt);border-radius:var(--radius);font-size:.83rem;display:flex;justify-content:space-between;align-items:center;">
-                <span>⚠️ ${inv.product.name}</span>
-                <span style="color:var(--red);font-family:var(--font-mono);font-weight:700;">${inv.quantity} ${inv.product.unit} còn lại</span>
-              </div>
+                <c:set var="hasLow" value="true" />
+                <div style="padding:10px 12px;background:var(--red-lt);border-radius:var(--radius);font-size:.83rem;display:flex;justify-content:space-between;align-items:center;">
+                  <span>⚠️ ${inv.product.name}</span>
+                  <span style="color:var(--red);font-family:var(--font-mono);font-weight:700;">${inv.quantity} ${inv.product.unit} còn lại</span>
+                </div>
               </c:if>
             </c:forEach>
+            <c:if test="${!hasLow}">
+              <div class="empty-state" style="padding:16px 0;">
+                <div class="empty-icon">✅</div>
+                Tồn kho bình thường, không có cảnh báo.
+              </div>
+            </c:if>
           </div>
         </section>
       </div>
