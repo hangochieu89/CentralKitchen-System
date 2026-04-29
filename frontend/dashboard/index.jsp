@@ -128,16 +128,16 @@
 
         <div class="role-list">
             <!-- 1. Điều phối cung ứng -->
-            <a href="${pageContext.request.contextPath}/supply-coordinator/index.html" class="role-card not-ready" title="Đang phát triển">
+            <a href="${pageContext.request.contextPath}/supply-coordinator/index.html" class="role-card">
                 <span class="icon">📦</span>
                 <div class="info">
                     <span>Supply Coordinator</span>
-                    <small>Điều phối cung ứng (Đang phát triển)</small>
+                    <small>Điều phối cung ứng — đơn hàng, lịch giao, trạng thái giao</small>
                 </div>
             </a>
 
             <!-- 2. Quản lý vận hành -->
-            <a href="${pageContext.request.contextPath}/manager-admin/index.html" class="role-card">
+            <a href="${pageContext.request.contextPath}/manager" class="role-card">
                 <span class="icon">📈</span>
                 <div class="info">
                     <span>Manager</span>
@@ -155,11 +155,11 @@
             </a>
 
             <!-- 4. Quản trị hệ thống -->
-            <a href="${pageContext.request.contextPath}/admin/index.html" class="role-card not-ready" title="Đang phát triển">
+            <a href="${pageContext.request.contextPath}/admin" class="role-card">
                 <span class="icon">⚙️</span>
                 <div class="info">
                     <span>Admin</span>
-                    <small>Quản trị hệ thống (Đang phát triển)</small>
+                    <small>Quản trị hệ thống</small>
                 </div>
             </a>
 

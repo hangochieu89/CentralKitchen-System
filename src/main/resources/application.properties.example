@@ -1,0 +1,13 @@
+# Tham chiếu cấu hình. Trong repo:
+# - application.properties: mặc định profile local (H2).
+# - application-sqlserver.properties: chỉnh URL/user/pass cho SQL Server.
+
+# Chạy với SQL Server:
+#   spring.profiles.active=sqlserver
+#   (hoặc JVM: -Dspring-boot.run.profiles=sqlserver)
+
+# --- Default instance, cổng 1433 (đặt trong application-sqlserver.properties) ---
+# spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=CentralKitchenDB;encrypt=true;trustServerCertificate=true
+
+# --- SQL Server Express (named instance) ---
+# spring.datasource.url=jdbc:sqlserver://localhost\\SQLEXPRESS;databaseName=CentralKitchenDB;encrypt=true;trustServerCertificate=true

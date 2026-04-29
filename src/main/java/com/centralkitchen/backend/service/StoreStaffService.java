@@ -21,6 +21,9 @@ public class StoreStaffService {
     private final OrderItemRepository orderItemRepository; 
     private final ProductRepository productRepository;
     private final QualityFeedbackRepository feedbackRepository;
+    private final DeliveryRepository deliveryRepository;
+    private final UserRepository userRepository;
+    private final StoreRepository storeRepository;
 
     // 1. Xem tồn kho tại cửa hàng của mình
     public List<Inventory> getMyStoreInventory(Integer storeId) {
@@ -30,9 +33,27 @@ public class StoreStaffService {
     // 2. Tạo đơn đặt hàng mới gửi lên Bếp Trung Tâm
     @Transactional
     public Order createOrder(OrderRequest request) {
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new IllegalArgumentException("Đơn hàng phải có ít nhất 1 sản phẩm");
+        }
+
+        Store store = storeRepository.findById(request.getStoreId())
+                .orElseThrow(() -> new IllegalArgumentException("Cửa hàng không tồn tại"));
+        User createdBy = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("Người tạo đơn không tồn tại"));
+        if (!Boolean.TRUE.equals(store.getIsActive())) {
+            throw new IllegalArgumentException("Cửa hàng đang bị vô hiệu");
+        }
+        if (!Boolean.TRUE.equals(createdBy.getIsActive())) {
+            throw new IllegalArgumentException("Người dùng đang bị vô hiệu");
+        }
+        if (createdBy.getStore() == null || !store.getId().equals(createdBy.getStore().getId())) {
+            throw new IllegalArgumentException("Người dùng không thuộc cửa hàng này");
+        }
+
         Order order = Order.builder()
-                .store(new Store(request.getStoreId(), null, null, null, null, null, null))
-                .createdBy(new User(request.getUserId(), null, null, null, null, null, null, null, null))
+                .store(store)
+                .createdBy(createdBy)
                 .deliveryDate(request.getDeliveryDate())
                 .note(request.getNote())
                 .status("PENDING")
@@ -43,6 +64,12 @@ public class StoreStaffService {
         request.getItems().forEach(itemDto -> {
             Product product = productRepository.findById(itemDto.getProductId())
                     .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+            if (!Boolean.TRUE.equals(product.getIsActive())) {
+                throw new IllegalArgumentException("Sản phẩm '" + product.getName() + "' đang bị vô hiệu");
+            }
+            if (itemDto.getQuantity() == null || itemDto.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Số lượng đặt phải lớn hơn 0");
+            }
             
             OrderItem item = OrderItem.builder()
                     .order(savedOrder)
@@ -64,6 +91,10 @@ public class StoreStaffService {
     // 4. Gửi phản hồi chất lượng sau khi nhận hàng
     public QualityFeedback submitFeedback(QualityFeedback feedback) {
         return feedbackRepository.save(feedback);
+    }
+
+    public List<Delivery> getDeliveredDeliveriesByStore(Integer storeId) {
+        return deliveryRepository.findByOrderStoreIdAndStatus(storeId, "DELIVERED");
     }
 
     // Lấy danh sách tất cả sản phẩm để hiển thị trong form đặt hàng

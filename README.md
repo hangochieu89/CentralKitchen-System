@@ -18,6 +18,7 @@ CentralKitchen-System/
 ├── frontend/
 │   ├── kitchen-staff/
 │   ├── manager-admin/
+│   ├── supply-coordinator/   # Điều phối cung ứng (gọi API /api/supply-coordinator)
 │   └── store-staff/
 │
 └── src/main/java/com/centralkitchen/backend/
@@ -44,26 +45,33 @@ CentralKitchen-System/
 
 2. Cấu hình kết nối
 
-Mở file:  
-src/main/resources/application.properties
-
-Cập nhật:
-
-spring.datasource.username=your_username  
-spring.datasource.password=your_password  
-spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=CentralKitchenDB
+- **Mặc định (H2 in-memory):** không cần SQL Server; `mvn spring-boot:run` hoặc `.\mvnw.cmd spring-boot:run` là chạy được ngay (profile `local`).
+- **SQL Server:** chỉnh `spring.datasource.url`, `username`, `password` trong `src/main/resources/application-sqlserver.properties`, rồi chạy với profile `sqlserver`, ví dụ: `.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=sqlserver"`. Tham chiếu thêm `application.properties.example`.
 
 3. Chạy ứng dụng
 
-Cách 1: IntelliJ
-- Chạy file CentralKitchenSystemApplication.java
+Với H2: chỉ cần `.\mvnw.cmd spring-boot:run`. Với SQL Server: bật SQL Server, tạo DB (bước 1), rồi chạy với profile `sqlserver` như trên.
 
-Cách 2: Terminal  
-mvn spring-boot:run
+IntelliJ: chạy `CentralKitchenSystemApplication.java` (mặc định dùng H2). `mvn test` không yêu cầu SQL Server khi dùng profile mặc định.
 
-4. Truy cập API
+4. Truy cập
 
-http://localhost:8080
+- API / trang chủ: http://localhost:8080  
+- Dashboard (chọn vai trò): http://localhost:8080/dashboard/index.jsp  
+- Store Staff: http://localhost:8080/store-staff/index.html  
+- Central Kitchen Staff: http://localhost:8080/kitchen-staff/index.jsp  
+- **Supply Coordinator:** http://localhost:8080/supply-coordinator/index.html  
+- Manager/Admin portal: http://localhost:8080/manager-admin/index.html  
+
+(Giao diện Supply Coordinator gọi API tại `http://localhost:8080`; nếu mở file qua `python -m http.server`, cần backend chạy cổng 8080.)
+
+5. Header xác thực API theo vai trò
+
+- Từ bản này, các endpoint `/api/**` dùng header:
+  - `X-User-Id`
+  - `X-User-Role`
+- Các UI trong `frontend/` đã tự gắn header mặc định theo role demo.
+- Khi bảng user còn trống (chưa seed), interceptor cho phép bỏ qua header để tiện thử API nhanh.
 
 ## Phân công nhóm
 

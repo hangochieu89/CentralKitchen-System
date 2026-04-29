@@ -1,102 +1,204 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>Cửa hàng Franchise - Đặt hàng & Tồn kho</title>
-    <link rel="stylesheet" href="../css/kitchen-staff-styles.css"> </head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Franchise Store Staff</title>
+  <link rel="stylesheet" href="../css/kitchen-staff-styles.css">
+  <style>
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .hint{font-size:12px;color:#64748b;margin-top:8px}
+    .status{padding:2px 8px;border-radius:999px;font-size:11px}
+    .s-pending{background:#fef3c7;color:#92400e}.s-confirmed{background:#cffafe;color:#155e75}
+    .s-in-production{background:#ddd6fe;color:#5b21b6}.s-ready{background:#dcfce7;color:#166534}
+    .s-delivering{background:#dbeafe;color:#1e40af}.s-delivered{background:#bbf7d0;color:#14532d}
+    .s-cancelled,.s-failed{background:#fee2e2;color:#991b1b}
+  </style>
+</head>
 <body>
 <header>
-    <div class="brand">Store Management</div>
-    <div class="user-chip"><span>Nhân viên Cửa hàng</span></div>
+  <div class="brand">Store Staff Portal</div>
+  <div class="user-chip"><span>Franchise Store Staff</span></div>
 </header>
-
 <main>
-    <div class="page-header">
-        <h1>Quản lý Cửa hàng</h1>
-        <div class="actions">
-            <button class="btn btn-primary" onclick="openOrderModal()">+ Tạo đơn đặt hàng mới</button>
-        </div>
+  <div class="page-header">
+    <h1>Đặt hàng - Nhận hàng - Phản hồi chất lượng</h1>
+    <div class="actions">
+      <button class="btn btn-primary" id="btn-open-order">+ Tạo đơn đặt hàng</button>
+      <a class="btn btn-secondary" href="/dashboard/index.jsp">Về Dashboard</a>
     </div>
+  </div>
 
-    <section class="panel">
-        <header class="panel-head"><h2>Danh sách đơn hàng đã đặt</h2></header>
-        <div class="table-wrap">
-            <table id="order-table">
-                <thead>
-                    <tr>
-                        <th>Mã đơn</th>
-                        <th>Ngày đặt</th>
-                        <th>Ngày nhận dự kiến</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    </tbody>
-            </table>
-        </div>
-    </section>
+  <section class="panel">
+    <header class="panel-head"><h2>Cấu hình phiên làm việc</h2></header>
+    <div style="padding:16px" class="grid-2">
+      <label>Store ID <input id="store-id" type="number" value="2"></label>
+      <label>User ID (STORE_STAFF) <input id="user-id" type="number" value="7"></label>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header class="panel-head"><h2>Tồn kho cửa hàng</h2></header>
+    <div class="table-wrap"><table id="inventory-table"><thead><tr><th>Sản phẩm</th><th>Tồn kho</th><th>Ngưỡng min</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="panel">
+    <header class="panel-head"><h2>Danh sách đơn hàng</h2></header>
+    <div class="table-wrap"><table id="order-table"><thead><tr><th>Mã đơn</th><th>Ngày đặt</th><th>Ngày nhận dự kiến</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody></tbody></table></div>
+  </section>
 </main>
 
 <dialog id="dlg-order">
-    <header><h3>Tạo đơn đặt hàng</h3></header>
-    <div class="dialog-body">
-        <div class="form-group">
-            <label>Ngày mong muốn nhận</label>
-            <input type="datetime-local" id="delivery-date">
-        </div>
-        <div id="product-selection-list">
-            </div>
+  <header><h3>Tạo đơn đặt hàng</h3></header>
+  <div class="dialog-body">
+    <div class="form-group">
+      <label>Ngày mong muốn nhận</label>
+      <input type="datetime-local" id="delivery-date">
     </div>
-    <footer>
-        <button class="btn btn-secondary" onclick="document.getElementById('dlg-order').close()">Hủy</button>
-        <button class="btn btn-primary" onclick="submitOrder()">Gửi đơn hàng</button>
-    </footer>
+    <div id="product-selection-list"></div>
+    <div class="hint">Nhập số lượng > 0 cho các sản phẩm cần đặt.</div>
+  </div>
+  <footer>
+    <button class="btn btn-secondary" onclick="document.getElementById('dlg-order').close()">Hủy</button>
+    <button class="btn btn-primary" id="btn-submit-order">Gửi đơn hàng</button>
+  </footer>
+</dialog>
+
+<dialog id="dlg-feedback">
+  <header><h3>Phản hồi chất lượng giao hàng</h3></header>
+  <div class="dialog-body">
+    <input id="fb-delivery-id" type="hidden">
+    <div class="form-group"><label>Delivery ID</label><input id="fb-delivery-view" disabled></div>
+    <div class="form-group"><label>Đánh giá (1-5)</label><input id="fb-rating" type="number" min="1" max="5" value="5"></div>
+    <div class="form-group"><label>Nhận xét</label><textarea id="fb-comment" rows="3"></textarea></div>
+  </div>
+  <footer>
+    <button class="btn btn-secondary" onclick="document.getElementById('dlg-feedback').close()">Hủy</button>
+    <button class="btn btn-primary" id="btn-submit-feedback">Gửi phản hồi</button>
+  </footer>
 </dialog>
 
 <script>
-    const STORE_ID = 2; // Giả định ID cửa hàng hiện tại
-    const USER_ID = 7;  // Giả định ID user đang đăng nhập
+  const API = '/api/store-staff';
+  function currentStoreId(){ return parseInt(document.getElementById('store-id').value, 10); }
+  function currentUserId(){ return parseInt(document.getElementById('user-id').value, 10); }
+  function headers(extra={}){
+    const uid = currentUserId();
+    if (!uid) throw new Error('Vui lòng nhập User ID hợp lệ');
+    return {'X-User-Id':String(uid), 'X-User-Role':'STORE_STAFF', ...extra};
+  }
+  let productsCache = [];
+  let deliveriesByOrder = {};
 
-    async function loadOrders() {
-        const response = await fetch(`/api/store-staff/orders/${STORE_ID}`);
-        const orders = await response.json();
-        const tbody = document.querySelector("#order-table tbody");
-        tbody.innerHTML = orders.map(o => `
-            <tr>
-                <td>#ORD-${o.id}</td>
-                <td>${new Date(o.orderDate).toLocaleString()}</td>
-                <td>${o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString() : '-'}</td>
-                <td><span class="badge badge-pending">${o.status}</span></td>
-                <td><button class="btn btn-sm">Chi tiết</button></td>
-            </tr>
-        `).join('');
+  function statusClass(s){
+    return {
+      PENDING:'s-pending', CONFIRMED:'s-confirmed', IN_PRODUCTION:'s-in-production',
+      READY:'s-ready', DELIVERING:'s-delivering', DELIVERED:'s-delivered',
+      CANCELLED:'s-cancelled', FAILED:'s-failed'
+    }[s] || 's-pending';
+  }
+
+  async function fetchJson(url, options = {}) {
+    const res = await fetch(url, options);
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.message || body.error || ('HTTP ' + res.status));
+    if (body && typeof body === 'object' && !Array.isArray(body) && body.success === false) {
+      throw new Error(body.message || body.error || 'Yêu cầu thất bại');
     }
+    return body;
+  }
 
-    async function submitOrder() {
-        const data = {
-            storeId: STORE_ID,
-            userId: USER_ID,
-            deliveryDate: document.getElementById('delivery-date').value,
-            items: [
-                { productId: 1, quantity: 10.0, note: "Cần gấp" } // Demo tĩnh
-            ]
-        };
+  async function loadInventory() {
+    const sid = currentStoreId();
+    if (!sid) throw new Error('Vui lòng nhập Store ID hợp lệ');
+    const data = await fetchJson(`${API}/inventory/${sid}`, {headers: headers()});
+    const rows = data.map(i => `<tr><td>${i.product?.name || '-'}</td><td>${i.quantity ?? 0} ${i.product?.unit || ''}</td><td>${i.minThreshold ?? 0}</td></tr>`).join('');
+    document.querySelector('#inventory-table tbody').innerHTML = rows || '<tr><td colspan="3">Chưa có dữ liệu</td></tr>';
+  }
 
-        const response = await fetch('/api/store-staff/orders', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
+  async function loadOrders() {
+    const sid = currentStoreId();
+    if (!sid) throw new Error('Vui lòng nhập Store ID hợp lệ');
+    const orders = await fetchJson(`${API}/orders/${sid}`, {headers: headers()});
+    const rows = orders.map(o => `
+      <tr>
+        <td>#ORD-${o.id}</td>
+        <td>${o.orderDate ? new Date(o.orderDate).toLocaleString() : '-'}</td>
+        <td>${o.deliveryDate ? new Date(o.deliveryDate).toLocaleString() : '-'}</td>
+        <td><span class="status ${statusClass(o.status)}">${o.status}</span></td>
+        <td>
+          <button class="btn btn-sm" onclick="viewOrderDetail(${o.id})">Chi tiết</button>
+          ${o.status === 'DELIVERED' ? `<button class="btn btn-sm btn-primary" onclick="openFeedbackForOrder(${o.id})">Feedback</button>` : ''}
+        </td>
+      </tr>`).join('');
+    document.querySelector('#order-table tbody').innerHTML = rows || '<tr><td colspan="5">Chưa có đơn hàng</td></tr>';
+  }
 
-        if(response.ok) {
-            alert("Đặt hàng thành công!");
-            document.getElementById('dlg-order').close();
-            loadOrders();
-        }
+  async function loadProducts() {
+    productsCache = await fetchJson(`${API}/products`, {headers: headers()});
+    const html = productsCache.map(p => `
+      <div class="form-group">
+        <label>${p.name} (${p.unit})</label>
+        <input type="number" min="0" step="0.1" id="qty-${p.id}" placeholder="0">
+      </div>`).join('');
+    document.getElementById('product-selection-list').innerHTML = html || '<div>Không có sản phẩm khả dụng</div>';
+  }
+
+  async function submitOrder() {
+    const delivery = document.getElementById('delivery-date').value;
+    const items = productsCache
+      .map(p => ({ productId: p.id, quantity: parseFloat(document.getElementById(`qty-${p.id}`).value || '0'), note: '' }))
+      .filter(i => i.quantity > 0);
+    if (!items.length) { alert('Vui lòng chọn ít nhất 1 sản phẩm với số lượng > 0'); return; }
+    const sid = currentStoreId();
+    const uid = currentUserId();
+    if (!sid || !uid) { alert('Vui lòng nhập đúng Store ID và User ID'); return; }
+    const body = { storeId: sid, userId: uid, deliveryDate: delivery ? delivery : null, note: 'Đặt từ Store UI', items };
+    await fetchJson(`${API}/orders`, {method:'POST', headers: headers({'Content-Type':'application/json'}), body: JSON.stringify(body)});
+    document.getElementById('dlg-order').close();
+    await Promise.all([loadOrders(), loadInventory()]);
+    alert('Đặt hàng thành công');
+  }
+
+  async function viewOrderDetail(orderId){
+    const detail = await fetchJson(`${API}/orders/detail/${orderId}`, {headers: headers()});
+    const itemText = (detail.items || []).map(i => `${i.productName}: ${i.quantity} ${i.productUnit || ''}`).join('\n');
+    alert(`Đơn #${detail.id}\nTrạng thái: ${detail.status}\n${itemText}`);
+  }
+
+  async function openFeedbackForOrder(orderId){
+    if (!deliveriesByOrder[orderId]) {
+      const sid = currentStoreId();
+      if (!sid) { alert('Vui lòng nhập Store ID hợp lệ'); return; }
+      const list = await fetchJson(`/api/store-staff/deliveries/delivered/${sid}`, {headers: headers()});
+      list.forEach(d => deliveriesByOrder[d.order?.id] = d.id);
     }
+    const deliveryId = deliveriesByOrder[orderId];
+    if (!deliveryId) { alert('Chưa tìm thấy delivery DELIVERED cho đơn này'); return; }
+    document.getElementById('fb-delivery-id').value = deliveryId;
+    document.getElementById('fb-delivery-view').value = deliveryId;
+    document.getElementById('dlg-feedback').showModal();
+  }
 
-    window.onload = loadOrders;
+  async function submitFeedback(){
+    const body = {
+      delivery: { id: parseInt(document.getElementById('fb-delivery-id').value, 10) },
+      submittedBy: { id: currentUserId() },
+      rating: parseInt(document.getElementById('fb-rating').value, 10),
+      comment: document.getElementById('fb-comment').value
+    };
+    await fetchJson(`${API}/feedback`, {method:'POST', headers: headers({'Content-Type':'application/json'}), body: JSON.stringify(body)});
+    document.getElementById('dlg-feedback').close();
+    alert('Đã gửi phản hồi');
+  }
+
+  document.getElementById('btn-open-order').onclick = () => document.getElementById('dlg-order').showModal();
+  document.getElementById('btn-submit-order').onclick = submitOrder;
+  document.getElementById('btn-submit-feedback').onclick = submitFeedback;
+  document.getElementById('store-id').addEventListener('change', () => Promise.all([loadInventory(), loadOrders()]));
+  document.getElementById('user-id').addEventListener('change', () => Promise.all([loadInventory(), loadOrders(), loadProducts()]));
+
+  window.onload = () => Promise.all([loadInventory(), loadOrders(), loadProducts()]).catch(e => alert(e.message));
 </script>
 </body>
 </html>

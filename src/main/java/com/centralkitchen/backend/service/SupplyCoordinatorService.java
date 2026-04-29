@@ -23,6 +23,8 @@ public class SupplyCoordinatorService {
     private final ProductionPlanRepository productionPlanRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final InventoryRepository inventoryRepository;
+    private final StoreRepository storeRepository;
     
     /**
      * Tổng hợp tất cả đơn hàng đang chờ xử lý
@@ -82,6 +84,16 @@ public class SupplyCoordinatorService {
         
         order.setStatus("CONFIRMED");
         Order savedOrder = orderRepository.save(order);
+
+        boolean hasPlan = !productionPlanRepository.findByOrderId(savedOrder.getId()).isEmpty();
+        if (!hasPlan) {
+            productionPlanRepository.save(ProductionPlan.builder()
+                    .order(savedOrder)
+                    .status("PENDING")
+                    .plannedDate(savedOrder.getDeliveryDate() != null ? savedOrder.getDeliveryDate() : LocalDateTime.now())
+                    .note("Auto tạo khi xác nhận đơn")
+                    .build());
+        }
         return convertOrderToDTO(savedOrder);
     }
     
@@ -92,6 +104,10 @@ public class SupplyCoordinatorService {
     public DeliveryDTO scheduleDelivery(DeliveryScheduleRequestDTO request) {
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("Đơn hàng không tồn tại"));
+
+        if (!List.of("READY", "DELIVERING").contains(order.getStatus())) {
+            throw new IllegalStateException("Chỉ đơn READY hoặc DELIVERING mới có thể lập lịch giao");
+        }
         
         User coordinator = userRepository.findById(request.getCoordinatorId())
                 .orElseThrow(() -> new IllegalArgumentException("Điều phối viên không tồn tại"));
@@ -137,11 +153,19 @@ public class SupplyCoordinatorService {
         
         Delivery savedDelivery = deliveryRepository.save(delivery);
         
-        // Nếu giao hàng thành công, cập nhật trạng thái order
+        // Đồng bộ trạng thái order theo luồng giao nhận
+        if ("IN_TRANSIT".equals(request.getStatus())) {
+            Order order = delivery.getOrder();
+            order.setStatus("DELIVERING");
+            orderRepository.save(order);
+        }
+
+        // Nếu giao hàng thành công, cập nhật trạng thái order + tồn kho
         if ("DELIVERED".equals(request.getStatus())) {
             Order order = delivery.getOrder();
             order.setStatus("DELIVERED");
             orderRepository.save(order);
+            syncInventoryOnDelivered(order);
         }
         
         return convertDeliveryToDTO(savedDelivery);
@@ -193,8 +217,8 @@ public class SupplyCoordinatorService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Đơn hàng không tồn tại"));
         
-        if (order.getStatus().equals("DELIVERED")) {
-            throw new IllegalStateException("Không thể hủy đơn hàng đã giao");
+        if (List.of("DELIVERED", "DELIVERING").contains(order.getStatus())) {
+            throw new IllegalStateException("Không thể hủy đơn hàng đã giao hoặc đang vận chuyển");
         }
         
         order.setStatus("CANCELLED");
@@ -267,7 +291,7 @@ public class SupplyCoordinatorService {
     /**
      * Helper: Convert Order to OrderSummaryDTO
      */
-    private OrderSummaryDTO convertOrderToDTO(Order order) {
+    public OrderSummaryDTO toOrderSummaryDTO(Order order) {
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
         List<OrderItemDTO> itemDTOs = items.stream()
                 .map(item -> OrderItemDTO.builder()
@@ -291,6 +315,53 @@ public class SupplyCoordinatorService {
                 .items(itemDTOs)
                 .createdAt(order.getCreatedAt())
                 .build();
+    }
+
+    private OrderSummaryDTO convertOrderToDTO(Order order) {
+        return toOrderSummaryDTO(order);
+    }
+
+    private void syncInventoryOnDelivered(Order order) {
+        Store centralKitchen = storeRepository.findFirstByTypeAndIsActive("CENTRAL_KITCHEN", true)
+                .orElseThrow(() -> new IllegalStateException("Không tìm thấy bếp trung tâm đang hoạt động"));
+
+        List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+        for (OrderItem item : items) {
+            double deliveredQty = item.getQuantityDelivered() != null && item.getQuantityDelivered() > 0
+                    ? item.getQuantityDelivered()
+                    : item.getQuantityRequested();
+
+            Inventory centralInventory = inventoryRepository
+                    .findByStoreIdAndProductId(centralKitchen.getId(), item.getProduct().getId())
+                    .orElseGet(() -> Inventory.builder()
+                            .store(centralKitchen)
+                            .product(item.getProduct())
+                            .quantity(0.0)
+                            .minThreshold(0.0)
+                            .updatedAt(LocalDateTime.now())
+                            .build());
+
+            centralInventory.setQuantity(Math.max(0.0, centralInventory.getQuantity() - deliveredQty));
+            centralInventory.setUpdatedAt(LocalDateTime.now());
+            inventoryRepository.save(centralInventory);
+
+            Inventory storeInventory = inventoryRepository
+                    .findByStoreIdAndProductId(order.getStore().getId(), item.getProduct().getId())
+                    .orElseGet(() -> Inventory.builder()
+                            .store(order.getStore())
+                            .product(item.getProduct())
+                            .quantity(0.0)
+                            .minThreshold(0.0)
+                            .updatedAt(LocalDateTime.now())
+                            .build());
+
+            storeInventory.setQuantity(storeInventory.getQuantity() + deliveredQty);
+            storeInventory.setUpdatedAt(LocalDateTime.now());
+            inventoryRepository.save(storeInventory);
+
+            item.setQuantityDelivered(deliveredQty);
+        }
+        orderItemRepository.saveAll(items);
     }
     
     /**

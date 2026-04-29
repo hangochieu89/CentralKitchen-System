@@ -25,6 +25,7 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Integer> {
     
     // Tìm các delivery theo order id
     List<Delivery> findByOrderId(Integer orderId);
+    List<Delivery> findByOrderStoreIdAndStatus(Integer storeId, String status);
     
     // Tìm các delivery quá hạn: chưa giao/chưa thất bại và đã qua thời gian dự kiến
     List<Delivery> findByStatusNotInAndScheduledAtBefore(List<String> statuses, LocalDateTime dateTime);

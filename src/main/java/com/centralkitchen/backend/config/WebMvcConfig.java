@@ -1,11 +1,9 @@
 package com.centralkitchen.backend.config;
 
-import org.apache.catalina.Context;
-import org.apache.catalina.WebResourceRoot;
-import org.apache.catalina.webresources.StandardRoot;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -13,6 +11,11 @@ import java.io.File;
 
 @Configuration
 public class WebMvcConfig implements WebServerFactoryCustomizer<TomcatServletWebServerFactory>, WebMvcConfigurer {
+    private final ApiAuthInterceptor apiAuthInterceptor;
+
+    public WebMvcConfig(ApiAuthInterceptor apiAuthInterceptor) {
+        this.apiAuthInterceptor = apiAuthInterceptor;
+    }
 
     @Override
     public void customize(TomcatServletWebServerFactory factory) {
@@ -28,5 +31,11 @@ public class WebMvcConfig implements WebServerFactoryCustomizer<TomcatServletWeb
         // Ánh xạ URL /image/** vào thư mục image nằm trong resources
         registry.addResourceHandler("/image/**")
                 .addResourceLocations("classpath:/image/");
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(apiAuthInterceptor)
+                .addPathPatterns("/api/**");
     }
 }

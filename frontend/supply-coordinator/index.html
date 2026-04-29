@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Supply Coordinator — Central Kitchen</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:#0c1210;--bg2:#141b18;--bg3:#1a2420;--border:rgba(45,212,191,0.12);
+      --text:#ecfdf5;--muted:#6b7f78;--accent:#2dd4bf;--accent2:#5eead4;
+      --amber:#fbbf24;--red:#f87171;--r:10px;
+      --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+    .layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+    aside{background:var(--bg2);border-right:1px solid var(--border);padding:22px 16px;}
+    .brand{font-weight:600;font-size:15px;margin-bottom:4px;}
+    .sub{font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:.5px;}
+    .nav{margin-top:24px;display:flex;flex-direction:column;gap:4px;}
+    .nav button{width:100%;text-align:left;padding:10px 12px;border-radius:var(--r);border:1px solid transparent;background:transparent;color:var(--muted);font:inherit;cursor:pointer;}
+    .nav button:hover,.nav button.active{background:rgba(45,212,191,0.1);color:var(--accent2);border-color:var(--border);}
+    main{padding:28px 32px 40px;overflow-x:auto;}
+    h1{font-size:22px;font-weight:600;margin-bottom:6px;}
+    .hint{color:var(--muted);font-size:13px;margin-bottom:20px;}
+    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px;}
+    label{font-size:12px;color:var(--muted);}
+    input[type="number"],input[type="datetime-local"],select{padding:8px 10px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg3);color:var(--text);font:inherit;max-width:100%;}
+    .btn{padding:8px 14px;border-radius:var(--r);font:inherit;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text);}
+    .btn:hover{filter:brightness(1.08);}
+    .btn-primary{background:var(--accent);color:#042f2e;border-color:var(--accent);}
+    .btn-danger{background:rgba(248,113,113,0.15);color:var(--red);border-color:rgba(248,113,113,0.35);}
+    .btn-sm{padding:5px 10px;font-size:12px;}
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow:hidden;}
+    .ch{padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;}
+    .body{padding:16px 18px;}
+    table{width:100%;border-collapse:collapse;}
+    th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:8px 12px;border-bottom:1px solid var(--border);}
+    td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;color:#c4ddd6;}
+    tr:last-child td{border-bottom:none;}
+    .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
+    .b-pend{background:rgba(251,191,36,0.15);color:var(--amber);}
+    .b-conf{background:rgba(45,212,191,0.15);color:var(--accent2);}
+    .b-sch{background:rgba(91,156,246,0.15);color:#7cb8ff;}
+    .b-trans{background:rgba(167,139,250,0.15);color:#c4b5fd;}
+    .b-done{background:rgba(74,222,128,0.15);color:#86efac;}
+    .b-fail,.b-can{background:rgba(248,113,113,0.12);color:var(--red);}
+    .items{font-size:12px;color:var(--muted);margin-top:6px;font-family:var(--mono);}
+    .toast{position:fixed;bottom:20px;right:20px;padding:12px 16px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);font-size:13px;z-index:50;animation:fade .25s;}
+    .toast.err{border-color:rgba(248,113,113,0.4);color:var(--red);}
+    @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .hidden{display:none;}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brand">📦 Supply Coordinator</div>
+    <div class="sub">ĐIỀU PHỐI CUNG ỨNG</div>
+    <nav class="nav">
+      <button type="button" class="active" data-sec="orders">Đơn hàng</button>
+      <button type="button" data-sec="schedule">Lập lịch giao</button>
+      <button type="button" data-sec="deliveries">Giao hàng</button>
+      <button type="button" data-sec="stats">Kế hoạch SX</button>
+    </nav>
+    <div style="margin-top:28px;padding-top:18px;border-top:1px solid var(--border);">
+      <label>ID điều phối (demo DB: coord1 = 3)</label>
+      <input type="number" id="coordId" value="3" min="1" style="width:100%;margin-top:6px;"/>
+    </div>
+    <a href="/dashboard/index.jsp" class="btn" style="display:block;text-align:center;margin-top:16px;text-decoration:none;">← Dashboard</a>
+  </aside>
+  <main>
+    <h1 id="pageTitle">Đơn hàng</h1>
+    <p class="hint" id="pageHint">Xác nhận đơn PENDING, theo dõi CONFIRMED.</p>
+
+    <section id="sec-orders">
+      <div class="card">
+        <div class="ch">Đơn chờ xử lý (PENDING)</div>
+        <div class="body" id="pendingWrap"><p class="hint">Đang tải…</p></div>
+      </div>
+      <div class="card">
+        <div class="ch">Đơn đã xác nhận (CONFIRMED)</div>
+        <div class="body" id="confirmedWrap"><p class="hint">Đang tải…</p></div>
+      </div>
+    </section>
+
+    <section id="sec-schedule" class="hidden">
+      <div class="card">
+        <div class="ch">Lập lịch giao hàng</div>
+        <div class="body">
+          <div class="row">
+            <label>Mã đơn (orderId)&nbsp;<input type="number" id="schOrderId" min="1" placeholder="VD: 3"/></label>
+          </div>
+          <div class="row">
+            <label>Thời gian giao dự kiến&nbsp;<input type="datetime-local" id="schAt"/></label>
+          </div>
+          <div class="row">
+            <label>Ghi chú&nbsp;<input type="text" id="schNote" placeholder="Tùy chọn" style="min-width:220px;"/></label>
+          </div>
+          <button type="button" class="btn btn-primary" id="btnSchedule">Tạo lịch giao</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-deliveries" class="hidden">
+      <div class="card">
+        <div class="ch">Giao hàng của điều phối viên + quá hạn</div>
+        <div class="body">
+          <div class="row">
+            <button type="button" class="btn btn-sm" id="btnReloadDel">Tải lại</button>
+            <button type="button" class="btn btn-sm" id="btnOverdue">Xem quá hạn (tất cả)</button>
+          </div>
+          <div id="deliveriesWrap"><p class="hint">Đang tải…</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-stats" class="hidden">
+      <div class="card">
+        <div class="ch">Kế hoạch sản xuất (7 ngày gần nhất)</div>
+        <div class="body">
+          <button type="button" class="btn btn-primary" id="btnStats">Tải dữ liệu</button>
+          <div id="statsWrap" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+(function(){
+  const API = '/api/supply-coordinator';
+  function coordId(){ return parseInt(document.getElementById('coordId').value,10); }
+  function toast(msg, err){
+    const t = document.createElement('div');
+    t.className = 'toast' + (err?' err':'');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(), 3200);
+  }
+  function fmtLocal(dt){
+    if(!dt) return '';
+    const d = new Date(dt);
+    if(isNaN(d.getTime())) return dt;
+    const p=n=>String(n).padStart(2,'0');
+    return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+  }
+  function dtLocalToApi(s){
+    if(!s) return '';
+    return s.replace('T',' ')+':00';
+  }
+  function badgeStatus(s){
+    const m={PENDING:'b-pend',CONFIRMED:'b-conf',IN_PRODUCTION:'b-sch',READY:'b-trans',DELIVERED:'b-done',CANCELLED:'b-can',
+      SCHEDULED:'b-sch',IN_TRANSIT:'b-trans',FAILED:'b-fail'};
+    return '<span class="badge '+(m[s]||'')+'">'+(s||'')+'</span>';
+  }
+  function itemLines(items){
+    if(!items||!items.length) return '';
+    return '<div class="items">'+items.map(i=>i.productName+': '+i.quantity+' '+ (i.productUnit||'')).join(' · ')+'</div>';
+  }
+  function authHeaders(extra={}) {
+    const id = coordId();
+    if (!id) throw new Error('Vui lòng nhập ID điều phối viên hợp lệ');
+    return {'X-User-Id': String(id), 'X-User-Role': 'SUPPLY_COORDINATOR', ...extra};
+  }
+  async function api(method, path, body){
+    const opt = { method, headers:{} };
+    opt.headers = authHeaders();
+    if(body){ opt.headers['Content-Type']='application/json'; opt.body=JSON.stringify(body); }
+    const r = await fetch(API+path, opt);
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok || j.success===false){
+      throw new Error(j.message || r.statusText || 'Lỗi API');
+    }
+    return j;
+  }
+  function renderOrders(el, orders, actions){
+    if(!orders.length){ el.innerHTML='<p class="hint">Không có đơn.</p>'; return; }
+    el.innerHTML = '<table><thead><tr><th>#</th><th>Cửa hàng</th><th>Ngày đặt</th><th>Nhận dự kiến</th><th>TT</th><th></th></tr></thead><tbody>'+
+      orders.map(o=>'<tr><td style="font-family:var(--mono)">'+o.id+'</td><td>'+(o.storeName||'')+'</td><td style="font-size:12px">'+fmtLocal(o.orderDate)+'</td><td style="font-size:12px">'+(o.deliveryDate?fmtLocal(o.deliveryDate):'—')+'</td><td>'+badgeStatus(o.status)+'</td><td>'+actions(o)+'</td></tr><tr><td colspan="6" style="border-bottom:1px solid var(--border);padding-top:0">'+itemLines(o.items)+'</td></tr>').join('')+'</tbody></table>';
+  }
+  async function loadPending(){
+    const w = document.getElementById('pendingWrap');
+    w.innerHTML='<p class="hint">Đang tải…</p>';
+    try{
+      const j = await api('GET','/orders/pending');
+      const orders = j.data||[];
+      renderOrders(w, orders, o=>'<button type="button" class="btn btn-sm btn-primary" data-act="conf" data-id="'+o.id+'">Xác nhận</button> <button type="button" class="btn btn-sm btn-danger" data-act="can" data-id="'+o.id+'">Hủy</button>');
+      w.querySelectorAll('button[data-act]').forEach(b=>{
+        b.onclick = async ()=>{
+          const id = +b.dataset.id;
+          try{
+            if(b.dataset.act==='conf'){
+              await api('POST','/orders/'+id+'/confirm');
+              toast('Đã xác nhận đơn #'+id);
+            } else {
+              const reason = prompt('Lý do hủy?')||'';
+              const r = await fetch(API+'/orders/'+id+'/cancel?reason='+encodeURIComponent(reason),{method:'POST', headers: authHeaders()});
+              const jr = await r.json();
+              if(!r.ok||jr.success===false) throw new Error(jr.message||'Hủy thất bại');
+              toast('Đã hủy đơn #'+id);
+            }
+            loadPending(); loadConfirmed();
+          }catch(e){ toast(e.message,1); }
+        };
+      });
+    }catch(e){ w.innerHTML='<p class="hint">'+e.message+'</p>'; }
+  }
+  async function loadConfirmed(){
+    const w = document.getElementById('confirmedWrap');
+    w.innerHTML='<p class="hint">Đang tải…</p>';
+    try{
+      const j = await api('GET','/orders/status/CONFIRMED');
+      const orders = j.data||[];
+      renderOrders(w, orders, ()=>'');
+    }catch(e){ w.innerHTML='<p class="hint">'+e.message+'</p>'; }
+  }
+  async function loadDeliveries(){
+    const w = document.getElementById('deliveriesWrap');
+    w.innerHTML='<p class="hint">Đang tải…</p>';
+    try{
+      const j = await api('GET','/deliveries/coordinator/'+coordId());
+      const list = j.data||[];
+      if(!list.length){ w.innerHTML='<p class="hint">Chưa có phiếu giao.</p>'; return; }
+      w.innerHTML = '<table><thead><tr><th>#</th><th>Đơn</th><th>Lịch</th><th>TT</th><th></th></tr></thead><tbody>'+
+        list.map(d=>'<tr><td style="font-family:var(--mono)">'+d.id+'</td><td>#'+d.orderId+'</td><td style="font-size:12px">'+(d.scheduledAt?fmtLocal(d.scheduledAt):'—')+'</td><td>'+badgeStatus(d.status)+'</td><td>'+delActions(d)+'</td></tr>').join('')+'</tbody></table>';
+      w.querySelectorAll('button[data-dact]').forEach(b=>{
+        b.onclick = ()=>doDelAction(b.dataset.dact, +b.dataset.did);
+      });
+    }catch(e){ w.innerHTML='<p class="hint">'+e.message+'</p>'; }
+  }
+  function delActions(d){
+    if(d.status==='SCHEDULED') return '<button type="button" class="btn btn-sm btn-primary" data-dact="trans" data-did="'+d.id+'">Đang giao</button> <button type="button" class="btn btn-sm btn-danger" data-dact="fail" data-did="'+d.id+'">Thất bại</button>';
+    if(d.status==='IN_TRANSIT') return '<button type="button" class="btn btn-sm btn-primary" data-dact="done" data-did="'+d.id+'">Đã giao</button> <button type="button" class="btn btn-sm btn-danger" data-dact="fail" data-did="'+d.id+'">Thất bại</button>';
+    return '—';
+  }
+  async function doDelAction(act, deliveryId){
+    try{
+      if(act==='fail'){
+        const reason = prompt('Lý do?')||'';
+        const r = await fetch(API+'/deliveries/'+deliveryId+'/failed?reason='+encodeURIComponent(reason),{method:'POST', headers: authHeaders()});
+        const j = await r.json();
+        if(!r.ok||j.success===false) throw new Error(j.message||'Lỗi');
+        toast('Đã cập nhật');
+        loadDeliveries();
+        return;
+      }
+      const now = fmtLocal(new Date());
+      const body = { deliveryId, status: act==='trans'?'IN_TRANSIT':'DELIVERED', actualAt: act==='done'?now:null, note: null };
+      await api('PUT','/deliveries/update-status', body);
+      toast('Đã cập nhật trạng thái');
+      loadDeliveries();
+    }catch(e){ toast(e.message,1); }
+  }
+  document.getElementById('btnSchedule').onclick = async ()=>{
+    const orderId = +document.getElementById('schOrderId').value;
+    const local = document.getElementById('schAt').value;
+    const note = document.getElementById('schNote').value||null;
+    if(!orderId){ toast('Nhập mã đơn',1); return; }
+    if(!local){ toast('Chọn thời gian giao',1); return; }
+    try{
+      await api('POST','/deliveries/schedule',{ orderId, coordinatorId: coordId(), scheduledAt: dtLocalToApi(local), note });
+      toast('Đã lập lịch giao');
+      loadDeliveries();
+    }catch(e){ toast(e.message,1); }
+  };
+  document.getElementById('btnReloadDel').onclick = ()=>loadDeliveries();
+  document.getElementById('btnOverdue').onclick = async ()=>{
+    const w = document.getElementById('deliveriesWrap');
+    try{
+      const j = await api('GET','/deliveries/overdue');
+      const list = j.data||[];
+      if(!list.length){ toast('Không có giao hàng quá hạn'); return; }
+      w.innerHTML = '<p class="hint" style="margin-bottom:8px">Quá hạn ('+list.length+')</p><table><thead><tr><th>#</th><th>Đơn</th><th>Lịch</th><th>TT</th></tr></thead><tbody>'+
+        list.map(d=>'<tr><td>'+d.id+'</td><td>#'+d.orderId+'</td><td>'+fmtLocal(d.scheduledAt)+'</td><td>'+badgeStatus(d.status)+'</td></tr>').join('')+'</tbody></table>';
+    }catch(e){ toast(e.message,1); }
+  };
+  document.getElementById('btnStats').onclick = async ()=>{
+    const w = document.getElementById('statsWrap');
+    w.innerHTML='Đang tải…';
+    const end = new Date(); const start = new Date(end); start.setDate(start.getDate()-7);
+    const p = d=>d.toISOString().slice(0,19);
+    try{
+      const j = await fetch(
+        API+'/production-stats?startDate='+encodeURIComponent(p(start))+'&endDate='+encodeURIComponent(p(end)),
+        {headers: authHeaders()}
+      );
+      const jr = await j.json();
+      if(!j.ok||jr.success===false) throw new Error(jr.message||'Lỗi');
+      const rows = jr.data||[];
+      if(!rows.length){ w.innerHTML='<p class="hint">Không có bản ghi.</p>'; return; }
+      w.innerHTML = '<table><thead><tr><th>#</th><th>Đơn</th><th>NV</th><th>Kế hoạch</th><th>TT</th></tr></thead><tbody>'+
+        rows.map(x=>'<tr><td>'+x.id+'</td><td>#'+x.orderId+'</td><td>'+(x.assignedToName||'—')+'</td><td style="font-size:12px">'+(x.plannedDate?fmtLocal(x.plannedDate):'—')+'</td><td>'+badgeStatus(x.status)+'</td></tr>').join('')+'</tbody></table>';
+    }catch(e){ w.innerHTML='<p class="hint">'+e.message+'</p>'; }
+  };
+  const titles = { orders:['Đơn hàng','Xác nhận đơn PENDING, theo dõi CONFIRMED.'], schedule:['Lập lịch giao','Gán lịch giao cho đơn (sau khi CONFIRMED).'], deliveries:['Giao hàng','Theo dõi và cập nhật trạng thái giao.'], stats:['Kế hoạch sản xuất','Tổng hợp ProductionPlans trong 7 ngày.'] };
+  document.querySelectorAll('.nav button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const sec = btn.dataset.sec;
+      document.querySelectorAll('main > section').forEach(s=>s.classList.add('hidden'));
+      document.getElementById('sec-'+sec).classList.remove('hidden');
+      document.getElementById('pageTitle').textContent = titles[sec][0];
+      document.getElementById('pageHint').textContent = titles[sec][1];
+      if(sec==='deliveries') loadDeliveries();
+    });
+  });
+  loadPending();
+  loadConfirmed();
+})();
+</script>
+</body>
+</html>

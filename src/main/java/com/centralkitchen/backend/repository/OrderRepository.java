@@ -16,6 +16,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     // Đơn theo trạng thái
     List<Order> findByStatus(String status);
+    List<Order> findByStatusIn(List<String> statuses);
 
     // Đơn của 1 cửa hàng theo trạng thái
     List<Order> findByStoreIdAndStatus(Integer storeId, String status);
@@ -26,4 +27,6 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     // Đếm đơn đang xử lý toàn chuỗi (dùng cho dashboard Manager)
     @Query("SELECT COUNT(o) FROM Order o WHERE o.status NOT IN ('DELIVERED','CANCELLED')")
     Long countActiveOrders();
+
+    long countByStatus(String status);
 }
