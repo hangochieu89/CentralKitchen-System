@@ -314,9 +314,14 @@ public class SupplyCoordinatorService {
      * Helper: Convert ProductionPlan to ProductionPlanDTO
      */
     private ProductionPlanDTO convertProductionPlanToDTO(ProductionPlan plan) {
+        // orderId: lay order dau tien tu planOrders neu co
+        Integer orderId = null;
+        if (plan.getPlanOrders() != null && !plan.getPlanOrders().isEmpty()) {
+            orderId = plan.getPlanOrders().get(0).getOrder().getId();
+        }
         return ProductionPlanDTO.builder()
                 .id(plan.getId())
-                .orderId(plan.getOrder().getId())
+                .orderId(orderId)
                 .assignedToId(plan.getAssignedTo() != null ? plan.getAssignedTo().getId() : null)
                 .assignedToName(plan.getAssignedTo() != null ? plan.getAssignedTo().getFullName() : null)
                 .plannedDate(plan.getPlannedDate())
