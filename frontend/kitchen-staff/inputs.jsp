@@ -16,42 +16,89 @@
     <div class="two-col">
       <section class="panel">
         <header class="panel-head">
-          <h2>Danh sách nguyên liệu</h2>
+          <h2>Danh sách nguyên liệu đã nhập</h2>
         </header>
         <div class="filter-bar">
-          <input type="search" placeholder="Tìm nguyên liệu, nhà cung cấp…" />
-          <select><option>Tất cả</option><option>Thịt / Hải sản</option><option>Rau củ</option><option>Gia vị</option><option>Gạo / Bột</option></select>
+          <input type="search" id="inputs-search" placeholder="Tìm nguyên liệu…" oninput="filterInputs()" />
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Mã NL</th><th>Tên</th><th>Nhà CC</th><th>Ngày nhập</th><th>HSD</th><th>Tồn kho</th><th>Trạng thái</th></tr></thead>
-            <tbody>
-              <c:forEach items="${receiptDetails}" var="detail">
-              <tr>
-                <td><span class="mono">${detail.product.id}</span></td>
-                <td><strong>${detail.product.name}</strong></td>
-                <td>N/A</td>
-                <td><span class="mono">${detail.goodsReceipt != null ? detail.goodsReceipt.receiptDate : ''}</span></td>
-                <td><span class="expiry ok">${detail.expirationDate}</span></td>
-                <td><span class="mono">${detail.quantity} ${detail.product.unit}</span></td>
-                <td><span class="badge badge-done">OK</span></td>
-              </tr>
-              </c:forEach>
+            <thead>
+              <tr><th>Mã NL</th><th>Tên</th><th>Nhà cung cấp</th><th>Ngày nhập</th><th>HSD</th><th>Số lượng</th><th>Trạng thái</th></tr>
+            </thead>
+            <tbody id="inputs-tbody">
+              <c:choose>
+                <c:when test="${empty receiptDetails}">
+                  <tr><td colspan="7" class="empty-state">Chưa có nguyên liệu nào được nhập.</td></tr>
+                </c:when>
+                <c:otherwise>
+                  <c:forEach items="${receiptDetails}" var="detail">
+                  <tr data-input-name="${detail.product.name}">
+                    <td><span class="mono">${detail.product.id}</span></td>
+                    <td><strong>${detail.product.name}</strong></td>
+                    <td>
+                      <c:choose>
+                        <c:when test="${detail.goodsReceipt != null && detail.goodsReceipt.supplier != null}">
+                          <c:out value="${detail.goodsReceipt.supplier.name}"/>
+                        </c:when>
+                        <c:otherwise><span class="text-muted">—</span></c:otherwise>
+                      </c:choose>
+                    </td>
+                    <td><span class="mono">${detail.goodsReceipt != null ? detail.goodsReceipt.receiptDate : '—'}</span></td>
+                    <td><span class="expiry ok">${detail.expirationDate}</span></td>
+                    <td><span class="mono">${detail.quantity} ${detail.product.unit}</span></td>
+                    <td><span class="badge badge-done">OK</span></td>
+                  </tr>
+                  </c:forEach>
+                </c:otherwise>
+              </c:choose>
             </tbody>
           </table>
         </div>
       </section>
 
       <!-- Lịch sử nhập kho -->
-      <section class="panel" style="opacity:0.6; pointer-events:none;">
-        <header class="panel-head"><h2>Lịch sử hoạt động hôm nay</h2></header>
-        <ol class="timeline" style="margin:20px;">
-          <li>
-            <div class="t-body">
-              <div class="text-muted">Tính năng đang cập nhật...</div>
-            </div>
-          </li>
-        </ol>
+      <section class="panel">
+        <header class="panel-head"><h2>📋 Phiếu nhập kho gần đây</h2></header>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Mã phiếu</th><th>Nhà cung cấp</th><th>Ngày nhập</th><th>Trạng thái</th></tr>
+            </thead>
+            <tbody>
+              <c:choose>
+                <c:when test="${empty receipts}">
+                  <tr><td colspan="4" class="empty-state">Chưa có phiếu nhập nào.</td></tr>
+                </c:when>
+                <c:otherwise>
+                  <c:forEach items="${receipts}" var="receipt" end="9">
+                  <tr>
+                    <td><span class="mono">#RCP-${receipt.id}</span></td>
+                    <td><c:out value="${receipt.supplier.name}"/></td>
+                    <td><span class="mono">${receipt.receiptDate}</span></td>
+                    <td>
+                      <c:choose>
+                        <c:when test="${receipt.status == 'COMPLETED'}"><span class="badge badge-done">Hoàn thành</span></c:when>
+                        <c:when test="${receipt.status == 'PENDING'}"><span class="badge badge-pending">Chờ xử lý</span></c:when>
+                        <c:otherwise><span class="badge badge-alert">Đã hủy</span></c:otherwise>
+                      </c:choose>
+                    </td>
+                  </tr>
+                  </c:forEach>
+                </c:otherwise>
+              </c:choose>
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   </div><!-- /page-inputs -->
+
+<script>
+function filterInputs() {
+  const search = (document.getElementById('inputs-search').value||'').toLowerCase();
+  document.querySelectorAll('#inputs-tbody tr[data-input-name]').forEach(row => {
+    row.style.display = (!search || row.dataset.inputName.toLowerCase().includes(search)) ? '' : 'none';
+  });
+}
+</script>

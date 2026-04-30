@@ -9,32 +9,23 @@
         <p>Thứ Tư, 18 tháng 3 năm 2026 &mdash; Ca sáng</p>
       </hgroup>
       <div class="actions">
-        <button class="btn btn-primary" onclick="document.getElementById('dlg-plan').showModal()">+ Tạo kế hoạch SX</button>
+        <button class="btn btn-primary" onclick="openCreatePlanDialog()">+ Tạo kế hoạch SX</button>
       </div>
     </div>
 
     <!-- Stats -->
     <div class="stats-grid">
-      <c:set var="pendingOrders" value="0" />
+      <c:set var="pendingOrders"     value="0" />
       <c:set var="inProductionPlans" value="0" />
-      <c:set var="readyOrders" value="0" />
-      <c:set var="lowInventories" value="0" />
-
+      <c:set var="readyOrders"       value="0" />
+      <c:set var="lowInventories"    value="0" />
       <c:forEach items="${orders}" var="order">
-        <c:if test="${order.status == 'PENDING'}">
-          <c:set var="pendingOrders" value="${pendingOrders + 1}" />
-        </c:if>
-        <c:if test="${order.status == 'READY'}">
-          <c:set var="readyOrders" value="${readyOrders + 1}" />
-        </c:if>
+        <c:if test="${order.status == 'PENDING'}">      <c:set var="pendingOrders"    value="${pendingOrders + 1}" /></c:if>
+        <c:if test="${order.status == 'READY'}">        <c:set var="readyOrders"      value="${readyOrders + 1}" /></c:if>
       </c:forEach>
-
       <c:forEach items="${plans}" var="plan">
-        <c:if test="${plan.status == 'IN_PROGRESS'}">
-          <c:set var="inProductionPlans" value="${inProductionPlans + 1}" />
-        </c:if>
+        <c:if test="${plan.status == 'IN_PROGRESS'}">   <c:set var="inProductionPlans" value="${inProductionPlans + 1}" /></c:if>
       </c:forEach>
-
       <c:forEach items="${inventories}" var="inv">
         <c:if test="${inv.quantity < inv.minThreshold}">
           <c:set var="lowInventories" value="${lowInventories + 1}" />
@@ -67,33 +58,24 @@
       </article>
     </div>
 
-    <!-- Two-col layout -->
     <div class="two-col">
       <!-- Đơn mới nhất -->
       <section class="panel">
         <header class="panel-head">
           <h2>📋 Đơn hàng mới nhất</h2>
-          <div class="panel-actions">
-            <button class="btn btn-secondary btn-sm" onclick="showPage('orders', document.querySelector('[href=\'#orders\']'))">Xem tất cả</button>
-          </div>
+          <button class="btn btn-secondary btn-sm" onclick="showPage('orders', document.querySelector('[href=\'#orders\']'))">Xem tất cả</button>
         </header>
         <div class="table-wrap">
           <table>
             <thead>
-              <tr>
-                <th>Mã đơn</th>
-                <th>Cửa hàng</th>
-                <th>Ngày đặt</th>
-                <th>Trạng thái</th>
-                <th></th>
-              </tr>
+              <tr><th>Mã đơn</th><th>Cửa hàng</th><th>Ngày đặt</th><th>Trạng thái</th><th></th></tr>
             </thead>
             <tbody>
               <c:forEach items="${orders}" var="order" end="4">
               <tr>
                 <td><span class="mono">#ORD-${order.id}</span></td>
                 <td>${order.store.name}</td>
-                <td class="text-muted">${order.orderDate.toLocalDate()} ${order.orderDate.toLocalTime()}</td>
+                <td class="text-muted"><span class="mono">${order.orderDate}</span></td>
                 <td>
                   <c:choose>
                     <c:when test="${order.status == 'PENDING'}"><span class="badge badge-pending">Chờ xử lý</span></c:when>
@@ -113,7 +95,6 @@
         </div>
       </section>
 
-      <!-- Right column -->
       <div class="full-col">
         <!-- Tiến độ sản xuất -->
         <section class="panel">
@@ -130,14 +111,21 @@
                 <c:forEach items="${plans}" var="plan" end="3">
                 <div class="progress-wrap">
                   <div class="prog-label">
-                    <span>Đơn #ORD-${plan.order.id}</span>
-                    <span class="badge ${plan.status == 'COMPLETED' ? 'badge-done' : (plan.status == 'IN_PROGRESS' ? 'badge-process' : 'badge-pending')}" style="font-size:.68rem;">
-                      ${plan.status == 'COMPLETED' ? 'Hoàn thành' : (plan.status == 'IN_PROGRESS' ? 'Đang SX' : 'Chờ')}
+                    <span>${plan.product.name}
+                      <c:if test="${plan.assignedTo != null}"> — ${plan.assignedTo.fullName}</c:if>
                     </span>
+                    <c:choose>
+                      <c:when test="${plan.status == 'COMPLETED'}"><span class="badge badge-done" style="font-size:.68rem;">Hoàn thành</span></c:when>
+                      <c:when test="${plan.status == 'IN_PROGRESS'}"><span class="badge badge-process" style="font-size:.68rem;">Đang SX</span></c:when>
+                      <c:otherwise><span class="badge badge-pending" style="font-size:.68rem;">Chờ</span></c:otherwise>
+                    </c:choose>
                   </div>
-                  <progress class="${plan.status == 'COMPLETED' ? 'green' : (plan.status == 'IN_PROGRESS' ? 'amber' : '')}"
-                            value="${plan.status == 'COMPLETED' ? 100 : (plan.status == 'IN_PROGRESS' ? 50 : 0)}" max="100"></progress>
-                  <span class="text-muted" style="font-size:.73rem;">Phân công: ${plan.assignedTo != null ? plan.assignedTo.fullName : 'Chưa phân công'}</span>
+                  <c:choose>
+                    <c:when test="${plan.status == 'COMPLETED'}"><progress class="green" value="100" max="100"></progress></c:when>
+                    <c:when test="${plan.status == 'IN_PROGRESS'}"><progress class="amber" value="50" max="100"></progress></c:when>
+                    <c:otherwise><progress value="0" max="100"></progress></c:otherwise>
+                  </c:choose>
+                  <span class="text-muted" style="font-size:.73rem;">Kế hoạch: ${plan.plannedDate}</span>
                 </div>
                 </c:forEach>
               </c:otherwise>
