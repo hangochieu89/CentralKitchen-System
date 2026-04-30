@@ -16,4 +16,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     // Tìm theo tên (không phân biệt hoa thường)
     List<Product> findByNameContainingIgnoreCase(String name);
+
+    // Tìm theo category và trạng thái active
+    List<Product> findByCategoryAndIsActive(String category, Boolean isActive);
 }
