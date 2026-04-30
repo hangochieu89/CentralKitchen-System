@@ -5,7 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Inventory",
+@Table(name = "Inventory", schema = "dbo",
         uniqueConstraints = @UniqueConstraint(columnNames = {"store_id", "product_id"}))
 @Data
 @NoArgsConstructor

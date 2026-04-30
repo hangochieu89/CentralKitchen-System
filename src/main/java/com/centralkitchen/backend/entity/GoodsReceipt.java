@@ -5,7 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "GoodsReceipts")
+@Table(name = "GoodsReceipts", schema = "dbo")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

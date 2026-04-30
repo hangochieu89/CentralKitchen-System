@@ -5,7 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Stores")
+@Table(name = "Stores", schema = "dbo")
 @Data                    // Lombok: tự tạo getter/setter/toString
 @NoArgsConstructor       // Lombok: tạo constructor rỗng
 @AllArgsConstructor      // Lombok: tạo constructor đầy đủ

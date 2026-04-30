@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ProductBatches")
+@Table(name = "ProductBatches", schema = "dbo")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
