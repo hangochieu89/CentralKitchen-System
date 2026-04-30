@@ -3,9 +3,10 @@ package com.centralkitchen.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "ProductionPlans")
+@Table(name = "\"ProductionPlans\"", schema = "dbo")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,8 +18,11 @@ public class ProductionPlan {
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+    @Column(name = "total_quantity", nullable = false)
+    private Double totalQuantity;
 
     @ManyToOne
     @JoinColumn(name = "assigned_to")
@@ -28,12 +32,16 @@ public class ProductionPlan {
     private LocalDateTime plannedDate;
 
     @Column(length = 20)
+    @Builder.Default
     private String status = "PENDING";
-    // PENDING → IN_PROGRESS → COMPLETED → CANCELLED
 
     @Column(length = 500)
     private String note;
 
     @Column(name = "created_at")
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Transient
+    private List<ProductionPlanOrder> planOrders;
 }
