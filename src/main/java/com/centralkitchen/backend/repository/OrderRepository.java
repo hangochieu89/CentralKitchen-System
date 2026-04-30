@@ -11,6 +11,14 @@ import java.util.List;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Integer> {
 
+    // Tất cả đơn, kèm eager load orderItems + product
+    @Query("SELECT DISTINCT o FROM Order o " +
+           "LEFT JOIN FETCH o.orderItems oi " +
+           "LEFT JOIN FETCH oi.product " +
+           "LEFT JOIN FETCH o.store " +
+           "LEFT JOIN FETCH o.createdBy")
+    List<Order> findAllWithItems();
+
     // Tất cả đơn của 1 cửa hàng
     List<Order> findByStoreId(Integer storeId);
 
