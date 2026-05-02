@@ -92,7 +92,13 @@ public class SupplyCoordinatorService {
     public DeliveryDTO scheduleDelivery(DeliveryScheduleRequestDTO request) {
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("Đơn hàng không tồn tại"));
-        
+
+        if (!"READY".equals(order.getStatus())) {
+            throw new IllegalStateException(
+                    "Chỉ lập lịch giao khi đơn ở trạng thái READY (bếp trung tâm đã sẵn sàng xuất). Trạng thái hiện tại: "
+                            + order.getStatus());
+        }
+
         User coordinator = userRepository.findById(request.getCoordinatorId())
                 .orElseThrow(() -> new IllegalArgumentException("Điều phối viên không tồn tại"));
         
@@ -204,7 +210,7 @@ public class SupplyCoordinatorService {
         
         Order savedOrder = orderRepository.save(order);
         
-        List<Delivery> deliveries = deliveryRepository.findByOrderId(orderId);
+        List<Delivery> deliveries = deliveryRepository.findByOrder_Id(orderId);
         for (Delivery delivery : deliveries) {
             if (!delivery.getStatus().equals("DELIVERED")) {
                 delivery.setStatus("FAILED");
@@ -268,7 +274,7 @@ public class SupplyCoordinatorService {
      * Helper: Convert Order to OrderSummaryDTO
      */
     private OrderSummaryDTO convertOrderToDTO(Order order) {
-        List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+        List<OrderItem> items = orderItemRepository.findByOrder_Id(order.getId());
         List<OrderItemDTO> itemDTOs = items.stream()
                 .map(item -> OrderItemDTO.builder()
                         .id(item.getId())

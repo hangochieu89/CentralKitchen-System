@@ -82,6 +82,7 @@ CREATE TABLE Orders (
                                                                                        'PENDING','CONFIRMED','IN_PRODUCTION',
                                                                                        'READY','DELIVERING','DELIVERED','CANCELLED')),
                         note          NVARCHAR(500),
+                        store_receipt_confirmed_at DATETIME NULL,  -- cửa hàng xác nhận đã nhận hàng
                         created_at    DATETIME     DEFAULT GETDATE()
 );
 

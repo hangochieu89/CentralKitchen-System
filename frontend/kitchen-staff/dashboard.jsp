@@ -6,7 +6,7 @@
     <div class="page-header">
       <hgroup>
         <h1>Dashboard</h1>
-        <p>Thứ Tư, 18 tháng 3 năm 2026 &mdash; Ca sáng</p>
+        <p>Chuỗi franchise &mdash; bếp trung tâm: đơn <strong>Chờ xử lý</strong> do Điều phối xác nhận; bếp xử lý đơn <strong>Đã xác nhận</strong> trở đi.</p>
       </hgroup>
       <div class="actions">
         <button class="btn btn-primary" onclick="openCreatePlanDialog()">+ Tạo kế hoạch SX</button>
@@ -34,9 +34,9 @@
 
       <article class="stat-card c-orange">
         <div class="stat-icon">📋</div>
-        <div class="stat-label">Đơn chờ xử lý</div>
+        <div class="stat-label">Chờ điều phối</div>
         <div class="stat-value">${pendingOrders}</div>
-        <div class="stat-sub">Vừa cập nhật</div>
+        <div class="stat-sub">PENDING — Supply Coordinator</div>
       </article>
       <article class="stat-card c-blue">
         <div class="stat-icon">⚙️</div>

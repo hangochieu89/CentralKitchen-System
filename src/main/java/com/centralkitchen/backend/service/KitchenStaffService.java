@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class KitchenStaffService {
@@ -35,8 +36,8 @@ public class KitchenStaffService {
     public List<Order> getAllOrders() {
         List<Order> orders = orderRepository.findAll();
         orders.forEach(order -> {
-            List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
-            log.info("  [Service] Order #{} -> findByOrderId returned {} items", order.getId(), items.size());
+            List<OrderItem> items = orderItemRepository.findByOrder_Id(order.getId());
+            log.info("  [Service] Order #{} -> findByOrder_Id returned {} items", order.getId(), items.size());
             if (!items.isEmpty()) {
                 log.info("    first item product: {}", items.get(0).getProduct() != null ? items.get(0).getProduct().getName() : "NULL product");
             }
@@ -45,10 +46,28 @@ public class KitchenStaffService {
         return orders;
     }
 
-    public void updateOrderStatus(Integer id, String status) {
+    /**
+     * Bếp trung tâm chỉ xử lý đơn đã được Điều phối cung ứng xác nhận (CONFIRMED trở đi).
+     * PENDING → CONFIRMED do Supply Coordinator đảm nhiệm.
+     */
+    public void updateOrderStatus(Integer id, String newStatus) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng: " + id));
-        order.setStatus(status);
+        String current = order.getStatus();
+        if ("PENDING".equals(current)) {
+            throw new RuntimeException(
+                    "Đơn đang chờ Điều phối cung ứng xác nhận. Vui lòng không thao tác tại bếp cho đến khi đơn chuyển sang \"Đã xác nhận\".");
+        }
+        Map<String, Set<String>> allowed = Map.of(
+                "CONFIRMED", Set.of("IN_PRODUCTION"),
+                "IN_PRODUCTION", Set.of("READY"),
+                "READY", Set.of("DELIVERING"),
+                "DELIVERING", Set.of("DELIVERED")
+        );
+        if (!allowed.getOrDefault(current, Set.of()).contains(newStatus)) {
+            throw new RuntimeException("Không thể chuyển trạng thái từ \"" + current + "\" sang \"" + newStatus + "\" tại bếp.");
+        }
+        order.setStatus(newStatus);
         orderRepository.save(order);
     }
 
@@ -57,7 +76,7 @@ public class KitchenStaffService {
         List<ProductionPlan> plans = productionPlanRepository.findAll();
         // Manually load planOrders de tranh Hibernate naming strategy issue
         plans.forEach(plan -> {
-            List<ProductionPlanOrder> orders = productionPlanOrderRepository.findByPlanId(plan.getId());
+            List<ProductionPlanOrder> orders = productionPlanOrderRepository.findByPlan_Id(plan.getId());
             plan.setPlanOrders(orders);
         });
         return plans;
@@ -156,7 +175,7 @@ public class KitchenStaffService {
      */
     private void deductInventoryForPlan(ProductionPlan plan) {
         List<com.centralkitchen.backend.entity.Recipe> recipes =
-                recipeRepository.findByFinishedProductId(plan.getProduct().getId());
+                recipeRepository.findByFinishedProduct_Id(plan.getProduct().getId());
 
         // Lấy store CENTRAL_KITCHEN đầu tiên
         List<Store> kitchens = storeRepository.findByType("CENTRAL_KITCHEN");
@@ -181,13 +200,13 @@ public class KitchenStaffService {
     private void checkAndUpdateOrdersStatus(ProductionPlan completedPlan) {
         // Lấy danh sách đơn hàng liên kết với kế hoạch vừa hoàn thành
         List<ProductionPlanOrder> planOrders =
-                productionPlanOrderRepository.findByPlanId(completedPlan.getId());
+                productionPlanOrderRepository.findByPlan_Id(completedPlan.getId());
 
         for (ProductionPlanOrder ppo : planOrders) {
             Order order = ppo.getOrder();
             // Lấy tất cả kế hoạch liên quan đến đơn này
             List<ProductionPlanOrder> allPlanOrders =
-                    productionPlanOrderRepository.findByOrderId(order.getId());
+                    productionPlanOrderRepository.findByOrder_Id(order.getId());
 
             boolean allCompleted = allPlanOrders.stream().allMatch(p -> {
                 ProductionPlan relatedPlan = productionPlanRepository.findById(p.getPlan().getId())

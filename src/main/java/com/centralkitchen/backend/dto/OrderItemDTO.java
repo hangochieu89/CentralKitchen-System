@@ -13,4 +13,7 @@ public class OrderItemDTO {
     private String productName;
     private String productUnit;
     private Double quantity;
+
+    /** SL thực giao (nếu điều phối/bếp cập nhật); null coi như chưa khai báo */
+    private Double quantityDelivered;
 }

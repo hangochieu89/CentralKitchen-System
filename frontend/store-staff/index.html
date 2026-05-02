@@ -1,253 +1,781 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>Cửa hàng Franchise - Đặt hàng & Tồn kho</title>
-    <link rel="stylesheet" href="../css/kitchen-staff-styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Franchise Store — Đơn hàng &amp; Tồn kho</title>
+  <link rel="stylesheet" href="../css/kitchen-staff-styles.css">
+  <style>
+    /* Body dùng lưới kitchen (nav 220px + main); trang này không có sidebar — chiếm đúng cột main */
+    body > .st-wrap {
+      grid-column: 2 / -1;
+      grid-row: 2;
+      min-width: 0;
+    }
+    .st-wrap {
+      max-width: none;
+      width: 100%;
+      margin: 0;
+      padding: 1.25rem clamp(1rem, 2.5vw, 2.5rem) 2.5rem;
+    }
+    .st-hero {
+      background: linear-gradient(135deg, #fff7ed 0%, #fff 50%);
+      border: 1px solid var(--gray-200, #e2e8f0);
+      border-radius: var(--radius, 10px);
+      padding: 1rem 1.15rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.84rem;
+      color: var(--gray-600, #475569);
+      line-height: 1.55;
+    }
+    .st-hero strong { color: #c2410c; }
+    .st-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+    .st-layout .panel { min-width: 0; }
+    .st-layout .table-wrap table { width: 100%; table-layout: auto; }
+    @media (max-width: 900px) { .st-layout { grid-template-columns: 1fr; } }
+    .st-badge-low { background: #fef3c7; color: #92400e; font-size: 0.7rem; padding: 0.15rem 0.45rem; border-radius: 6px; font-weight: 600; }
+    .st-badge-ok { background: #dcfce7; color: #166534; font-size: 0.7rem; padding: 0.15rem 0.45rem; border-radius: 6px; font-weight: 600; }
+    .st-toast {
+      position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 9999;
+      padding: 0.65rem 1rem; border-radius: 8px; font-size: 0.85rem; color: #fff;
+      background: #0f172a; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      max-width: 90vw;
+    }
+    .st-toast.show { opacity: 1; }
+    .st-toast.ok { background: #15803d; }
+    .st-toast.bad { background: #b91c1c; }
+    .st-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1.15rem;
+    }
+    .st-stat {
+      background: #fff;
+      border: 1px solid var(--gray-200, #e2e8f0);
+      border-radius: var(--radius, 10px);
+      padding: 0.85rem 1rem;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+    .st-stat .label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray-500, #64748b); }
+    .st-stat .value { font-size: 1.35rem; font-weight: 700; color: var(--gray-800, #1e293b); margin-top: 0.2rem; }
+    .st-stat.warn .value { color: #b45309; }
+    .st-low-list { font-size: 0.78rem; color: var(--gray-600, #475569); margin-top: 0.35rem; line-height: 1.35; max-height: 4.2rem; overflow: auto; }
+    .st-inv-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+    #dlg-stocktake { width: min(720px, 96vw); }
+    #dlg-stocktake .sk-scroll { max-height: 52vh; overflow: auto; margin-top: 0.5rem; }
+    #dlg-stocktake table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    #dlg-stocktake th, #dlg-stocktake td { padding: 0.45rem 0.35rem; border-bottom: 1px solid var(--gray-200, #e2e8f0); text-align: left; }
+    #dlg-stocktake th { background: var(--gray-50, #f8fafc); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; color: var(--gray-500); }
+    #dlg-stocktake input[type="number"] { width: 100%; max-width: 7rem; padding: 0.35rem 0.45rem; }
+    #dlg-delta { width: min(420px, 94vw); }
+  </style>
 </head>
 <body>
 <header>
-    <div class="brand">Store Management</div>
-    <div class="user-chip"><span>Nhân viên Cửa hàng</span></div>
+  <div class="brand">Franchise Store</div>
+  <div class="user-chip">
+    <span id="st-user">…</span>
+    <a id="st-logout" class="btn btn-ghost btn-sm" href="/auth/logout" style="margin-left:8px;">Đăng xuất</a>
+  </div>
 </header>
 
-<main>
-    <div class="page-header">
-        <h1>Quản lý Cửa hàng</h1>
-        <div class="actions">
-            <button class="btn btn-primary" onclick="openOrderModal()">+ Tạo đơn đặt hàng mới</button>
-        </div>
+<div class="st-wrap">
+  <div class="st-hero">
+    Mỗi tài khoản chỉ thấy <strong>đơn hàng</strong> và <strong>tồn kho</strong> của <strong>đúng chi nhánh</strong> được gán.
+    Luồng: <strong>đặt hàng</strong> (NL / BTP / TP từ bếp) → theo dõi xử lý &amp; phiếu giao → khi đơn <strong>Đã giao</strong>, <strong>xác nhận đã nhận</strong> (cộng tồn) → <strong>đánh giá chất lượng</strong>.
+  </div>
+
+  <div class="page-header" style="margin-bottom:1rem;">
+    <h1 style="margin:0;">Cửa hàng franchise</h1>
+    <div class="actions">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="reloadAll()">Làm mới</button>
+      <button type="button" class="btn btn-primary" onclick="openOrderModal()">+ Tạo đơn đặt hàng</button>
     </div>
+  </div>
+
+  <div class="st-stats" id="st-stats" aria-live="polite">
+    <div class="st-stat"><div class="label">Mặt hàng đang theo dõi</div><div class="value" id="st-s-sku">—</div></div>
+    <div class="st-stat warn"><div class="label">Dưới ngưỡng cảnh báo</div><div class="value" id="st-s-low">—</div></div>
+    <div class="st-stat"><div class="label">Tổng số lượng (tất cả SKU)</div><div class="value" id="st-s-sum">—</div></div>
+    <div class="st-stat" style="grid-column: span 1;">
+      <div class="label">Cảnh báo nhanh</div>
+      <div class="st-low-list" id="st-s-preview">Đang tải…</div>
+    </div>
+  </div>
+
+  <div class="st-layout">
+    <section class="panel">
+      <header class="panel-head"><h2>Đơn hàng của chi nhánh</h2></header>
+      <div class="table-wrap">
+        <table id="order-table">
+          <thead>
+            <tr>
+              <th>Mã đơn</th>
+              <th>Đặt / giao dự kiến</th>
+              <th>Xử lý đơn</th>
+              <th>Phiếu giao</th>
+              <th>Nhận tại cửa hàng</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
 
     <section class="panel">
-        <header class="panel-head"><h2>Danh sách đơn hàng đã đặt</h2></header>
-        <div class="table-wrap">
-            <table id="order-table">
-                <thead>
-                    <tr>
-                        <th>Mã đơn</th>
-                        <th>Ngày đặt</th>
-                        <th>Ngày nhận dự kiến</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+      <header class="panel-head" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.5rem;">
+        <h2 style="margin:0;">Tồn kho tại cửa hàng</h2>
+        <div class="st-inv-actions">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="openStocktakeModal()">Kiểm kê &amp; cập nhật tồn</button>
         </div>
+      </header>
+      <p class="text-muted" style="font-size:.78rem;padding:0 4px 8px;">
+        Cửa hàng <strong>tự ghi nhận</strong> số đếm thực tế và điều chỉnh ± (hao hụt, nhận ngoài luồng…). Đặt hàng lên bếp là luồng riêng.
+        Dòng vàng = dưới ngưỡng tối thiểu.
+      </p>
+      <div class="table-wrap">
+        <table id="inv-table">
+          <thead>
+            <tr>
+              <th>Sản phẩm</th>
+              <th>Đơn vị</th>
+              <th>Tồn</th>
+              <th>Ngưỡng</th>
+              <th>Tồn / điều chỉnh</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </section>
-</main>
+  </div>
+</div>
+
+<dialog id="dlg-stocktake">
+  <header><h3>Kiểm kê &amp; cập nhật tồn</h3></header>
+  <div class="dialog-body">
+    <p class="text-muted" style="font-size:.78rem;margin-bottom:0.5rem;">
+      Nhập <strong>đếm thực tế</strong> cho từng dòng cần cập nhật (ghi đè tồn hệ thống). Ngưỡng: để trống nếu không đổi.
+      Có thể thêm mặt hàng chưa có trong bảng tồn bằng cách nhập đếm thực tế cho sản phẩm đó.
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="fillStocktakeFromCurrent()">Điền đếm = tồn hiện tại</button>
+    </div>
+    <div class="sk-scroll" id="sk-table-wrap"></div>
+  </div>
+  <footer>
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('dlg-stocktake').close()">Hủy</button>
+    <button type="button" class="btn btn-primary" onclick="submitStocktake()">Lưu kiểm kê</button>
+  </footer>
+</dialog>
+
+<dialog id="dlg-delta">
+  <header><h3>Điều chỉnh nhanh (+ / −)</h3></header>
+  <div class="dialog-body">
+    <input type="hidden" id="dlt-product-id">
+    <p style="margin:0 0 8px;font-weight:600;" id="dlt-product-name"></p>
+    <p class="text-muted" style="font-size:.76rem;margin-bottom:10px;">Dương: nhập thêm / tăng tồn. Âm: trừ (hao hụt, hủy nội bộ…). Tồn không được âm.</p>
+    <div class="form-group">
+      <label>Số lượng thay đổi (delta)</label>
+      <input type="number" id="dlt-delta" step="0.1" style="width:100%;padding:8px;">
+    </div>
+    <div class="form-group">
+      <label>Ghi chú (tuỳ chọn)</label>
+      <input type="text" id="dlt-note" placeholder="Ví dụ: hỏng 2kg…" style="width:100%;padding:8px;">
+    </div>
+  </div>
+  <footer>
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('dlg-delta').close()">Hủy</button>
+    <button type="button" class="btn btn-primary" onclick="submitDelta()">Áp dụng</button>
+  </footer>
+</dialog>
 
 <dialog id="dlg-order">
-    <header><h3>Tạo đơn đặt hàng</h3></header>
-    <div class="dialog-body">
-        <div class="form-group">
-            <label>Ngày mong muốn nhận</label>
-            <input type="datetime-local" id="delivery-date">
-        </div>
-        <div class="form-group">
-            <label>Ghi chú đơn hàng</label>
-            <textarea id="order-note" placeholder="Ví dụ: Giao trước 8h sáng..." style="width: 100%; margin-top: 5px;"></textarea>
-        </div>
-        <hr>
-        <h4>Chọn sản phẩm & Số lượng</h4>
-        <div id="product-selection-list" style="max-height: 250px; overflow-y: auto; border: 1px solid #eee; padding: 10px;"></div>
+  <header><h3>Tạo đơn đặt hàng</h3></header>
+  <div class="dialog-body">
+    <div class="form-group">
+      <label>Ngày mong muốn nhận</label>
+      <input type="datetime-local" id="delivery-date" style="width:100%;padding:8px;">
     </div>
-    <footer>
-        <button class="btn btn-secondary" onclick="document.getElementById('dlg-order').close()">Hủy</button>
-        <button class="btn btn-primary" onclick="submitOrder()">Gửi đơn hàng</button>
-    </footer>
+    <div class="form-group">
+      <label>Ghi chú</label>
+      <textarea id="order-note" placeholder="Ví dụ: Giao trước 8h…" style="width:100%;margin-top:5px;"></textarea>
+    </div>
+    <hr>
+    <p class="text-muted" style="font-size:.76rem;margin-bottom:8px;">Danh mục từ bếp trung tâm: <strong>nguyên liệu</strong>, <strong>bán thành phẩm</strong>, <strong>thành phẩm</strong> (theo phân loại hệ thống).</p>
+    <div id="product-selection-list" style="max-height:340px;overflow-y:auto;border:1px solid #eee;padding:10px;border-radius:8px;"></div>
+  </div>
+  <footer>
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('dlg-order').close()">Hủy</button>
+    <button type="button" class="btn btn-primary" onclick="submitOrder()">Gửi đơn</button>
+  </footer>
 </dialog>
 
 <dialog id="dlg-detail">
-    <header><h3>Chi tiết đơn hàng <span id="detail-order-id"></span></h3></header>
-    <div class="dialog-body">
-        <p><strong>Trạng thái:</strong> <span id="detail-status"></span></p>
-        <p><strong>Ngày đặt:</strong> <span id="detail-date"></span></p>
-        <table class="table-mini" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-            <thead>
-                <tr style="background: #f4f4f4; text-align: left;">
-                    <th style="padding: 8px; border: 1px solid #ddd;">Sản phẩm</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Số lượng</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Đơn vị</th>
-                </tr>
-            </thead>
-            <tbody id="detail-items-body"></tbody>
-        </table>
+  <header><h3>Chi tiết đơn <span id="detail-order-id"></span></h3></header>
+  <div class="dialog-body">
+    <p><strong>Trạng thái xử lý:</strong> <span id="detail-status"></span></p>
+    <p><strong>Ngày đặt:</strong> <span id="detail-date"></span></p>
+    <p><strong>Giao dự kiến:</strong> <span id="detail-deliv-wish"></span></p>
+    <p id="detail-receipt-line" style="font-size:.88rem;"></p>
+    <p id="detail-fb-line" style="font-size:.88rem;"></p>
+    <h4 style="margin:12px 0 6px;font-size:0.85rem;">Phiếu giao &amp; trạng thái</h4>
+    <div class="table-wrap" style="max-height:160px;overflow:auto;margin-bottom:10px;">
+      <table class="table-mini" style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f4f4f4;text-align:left;">
+            <th style="padding:6px;border:1px solid #ddd;">#</th>
+            <th style="padding:6px;border:1px solid #ddd;">Trạng thái</th>
+            <th style="padding:6px;border:1px solid #ddd;">Lịch giao</th>
+            <th style="padding:6px;border:1px solid #ddd;">Thực tế</th>
+          </tr>
+        </thead>
+        <tbody id="detail-deliveries-body"></tbody>
+      </table>
     </div>
-    <footer>
-        <button class="btn btn-secondary" onclick="document.getElementById('dlg-detail').close()">Đóng</button>
-    </footer>
+    <h4 style="margin:8px 0 6px;font-size:0.85rem;">Dòng hàng đặt</h4>
+    <table class="table-mini" style="width:100%;border-collapse:collapse;margin-top:4px;">
+      <thead>
+        <tr style="background:#f4f4f4;text-align:left;">
+          <th style="padding:8px;border:1px solid #ddd;">Sản phẩm</th>
+          <th style="padding:8px;border:1px solid #ddd;">Đặt</th>
+          <th style="padding:8px;border:1px solid #ddd;">Giao (ghi nhận)</th>
+          <th style="padding:8px;border:1px solid #ddd;">Đơn vị</th>
+        </tr>
+      </thead>
+      <tbody id="detail-items-body"></tbody>
+    </table>
+  </div>
+  <footer id="detail-footer" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('dlg-detail').close()">Đóng</button>
+  </footer>
 </dialog>
 
 <dialog id="dlg-feedback">
-    <header><h3>Đánh giá chất lượng đơn hàng</h3></header>
-    <div class="dialog-body">
-        <input type="hidden" id="fb-order-id">
-        <div class="form-group">
-            <label>Mức độ hài lòng (1-5 sao)</label>
-            <select id="fb-rating" style="width: 100%; padding: 8px;">
-                <option value="5">⭐⭐⭐⭐⭐ Rất tốt</option>
-                <option value="4">⭐⭐⭐⭐ Tốt</option>
-                <option value="3">⭐⭐⭐ Tạm được</option>
-                <option value="2">⭐⭐ Kém</option>
-                <option value="1">⭐ Rất tệ</option>
-            </select>
-        </div>
-        <div class="form-group" style="margin-top: 15px;">
-            <label>Ý kiến phản hồi</label>
-            <textarea id="fb-comment" placeholder="Nhập nhận xét về sản phẩm, đóng gói..." style="width: 100%; min-height: 80px;"></textarea>
-        </div>
+  <header><h3>Đánh giá sau khi nhận hàng</h3></header>
+  <div class="dialog-body">
+    <input type="hidden" id="fb-order-id">
+    <p class="text-muted" style="font-size:.78rem;">Chỉ gửi được khi đơn ở trạng thái <strong>DELIVERED</strong> và đã có phiếu giao.</p>
+    <div class="form-group">
+      <label>Số sao (1–5)</label>
+      <select id="fb-rating" style="width:100%;padding:8px;">
+        <option value="5">⭐⭐⭐⭐⭐ Rất tốt</option>
+        <option value="4">⭐⭐⭐⭐ Tốt</option>
+        <option value="3">⭐⭐⭐ Tạm được</option>
+        <option value="2">⭐⭐ Kém</option>
+        <option value="1">⭐ Rất tệ</option>
+      </select>
     </div>
-    <footer>
-        <button class="btn btn-secondary" onclick="document.getElementById('dlg-feedback').close()">Hủy</button>
-        <button class="btn btn-primary" onclick="submitFeedback()">Gửi đánh giá</button>
-    </footer>
+    <div class="form-group" style="margin-top:12px;">
+      <label>Nhận xét</label>
+      <textarea id="fb-comment" placeholder="Chất lượng, đóng gói…" style="width:100%;min-height:72px;"></textarea>
+    </div>
+  </div>
+  <footer>
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('dlg-feedback').close()">Hủy</button>
+    <button type="button" class="btn btn-primary" onclick="submitFeedback()">Gửi đánh giá</button>
+  </footer>
 </dialog>
 
+<div id="st-toast" class="st-toast" role="status"></div>
+
 <script>
-    const STORE_ID = 2;
-    const USER_ID = 7;
+(function () {
+  const pathIdx = location.pathname.indexOf('/store-staff/');
+  const ctx = pathIdx >= 0 ? location.pathname.substring(0, pathIdx) : '';
+  const api = function (p) { return ctx + p; };
 
-    //Tải danh sách đơn hàng
-    async function loadOrders() {
+  let me = null;
+
+  var ST_ORDER_VI = { PENDING: 'Chờ điều phối', CONFIRMED: 'Đã xác nhận', IN_PRODUCTION: 'Đang SX', READY: 'Sẵn sàng giao', DELIVERING: 'Đang giao', DELIVERED: 'Đã giao', CANCELLED: 'Đã hủy' };
+  var ST_DLV_VI = { SCHEDULED: 'Đã lên lịch', IN_TRANSIT: 'Đang giao', DELIVERED: 'Đã giao', FAILED: 'Thất bại' };
+  function viOrder(s) { return ST_ORDER_VI[s] || s || '—'; }
+  function viDlv(s) { return ST_DLV_VI[s] || s || '—'; }
+  function redir401(r) {
+    if (r.status === 401) { window.location.href = api('/login'); return true; }
+    return false;
+  }
+
+  function escAttr(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function toast(msg, ok) {
+    const t = document.getElementById('st-toast');
+    t.textContent = msg;
+    t.className = 'st-toast show ' + (ok ? 'ok' : 'bad');
+    setTimeout(function () { t.className = 'st-toast'; }, 2800);
+  }
+
+  async function boot() {
+    const r = await fetch(api('/api/session/me'), { credentials: 'same-origin' });
+    if (r.status === 401) { window.location.href = api('/login'); return; }
+    me = await r.json();
+    if (me.role !== 'STORE_STAFF' || me.storeId == null) {
+      window.location.href = api('/dashboard');
+      return;
+    }
+    document.getElementById('st-user').textContent = me.fullName + ' · ' + (me.storeName || ('Cửa hàng #' + me.storeId));
+    document.getElementById('st-logout').href = api('/auth/logout');
+    document.querySelector('.st-wrap').addEventListener('click', function (ev) {
+      var b = ev.target.closest('.st-delta-btn');
+      if (!b) return;
+      document.getElementById('dlt-product-id').value = b.getAttribute('data-pid');
+      document.getElementById('dlt-product-name').textContent = b.getAttribute('data-pname') || '';
+      document.getElementById('dlt-delta').value = '';
+      document.getElementById('dlt-note').value = '';
+      document.getElementById('dlg-delta').showModal();
+    });
+
+    await reloadAll();
+  }
+
+  window.reloadAll = async function () {
+    await Promise.all([loadOrders(), loadInventory(), loadSummary()]);
+  };
+
+  async function loadSummary() {
+    try {
+      var r = await fetch(api('/api/store-staff/inventory/' + me.storeId + '/summary'), { credentials: 'same-origin' });
+      if (redir401(r)) return;
+      if (r.status === 403) return;
+      if (!r.ok) return;
+      var s = await r.json();
+      document.getElementById('st-s-sku').textContent = s.trackedSkuCount != null ? String(s.trackedSkuCount) : '—';
+      document.getElementById('st-s-low').textContent = s.lowStockCount != null ? String(s.lowStockCount) : '—';
+      document.getElementById('st-s-sum').textContent = fmtNum(s.totalQuantity);
+      var prev = document.getElementById('st-s-preview');
+      var low = s.lowStockLines || [];
+      if (!low.length) {
+        prev.textContent = 'Không có mặt hàng dưới ngưỡng.';
+        return;
+      }
+      prev.innerHTML = low.map(function (x) {
+        return '<div>' + esc(x.productName || '') + ': <strong class="mono">' + fmtNum(x.quantity) + '</strong> / ngưỡng ' + fmtNum(x.minThreshold) + '</div>';
+      }).join('');
+    } catch (e) { /* ignore */ }
+  }
+
+  async function loadOrders() {
+    const r = await fetch(api('/api/store-staff/orders/' + me.storeId), { credentials: 'same-origin' });
+    if (redir401(r)) return;
+    if (r.status === 403) { toast('Không có quyền xem đơn.', false); return; }
+    const orders = await r.json();
+    const tbody = document.querySelector('#order-table tbody');
+    if (!Array.isArray(orders)) {
+      tbody.innerHTML = '';
+      return;
+    }
+    tbody.innerHTML = orders.map(function (o) {
+      const od = o.orderDate ? new Date(o.orderDate).toLocaleString('vi-VN') : '—';
+      const dd = o.deliveryDate ? new Date(o.deliveryDate).toLocaleString('vi-VN') : '—';
+      const stBadge = '<span class="badge badge-status-' + String(o.status).toLowerCase() + '">' + esc(viOrder(o.status)) + '</span>';
+      const dlv = o.latestDeliveryStatus ? esc(viDlv(o.latestDeliveryStatus)) : '—';
+      let rec = '—';
+      if (o.storeReceiptConfirmedAt) {
+        rec = 'Đã nhận · ' + new Date(o.storeReceiptConfirmedAt).toLocaleString('vi-VN');
+      } else if (o.status === 'DELIVERED') {
+        rec = '<span class="st-badge-low">Chưa xác nhận</span>';
+      }
+      let btns = '<button type="button" class="btn btn-sm" onclick="viewDetail(' + o.id + ')">Chi tiết</button>';
+      if (o.status === 'DELIVERED' && !o.storeReceiptConfirmedAt) {
+        btns += ' <button type="button" class="btn btn-sm btn-primary" onclick="confirmReceipt(' + o.id + ')">Xác nhận đã nhận</button>';
+      }
+      if (o.storeReceiptConfirmedAt && !o.qualityFeedbackSubmitted && o.status === 'DELIVERED') {
+        btns += ' <button type="button" class="btn btn-sm btn-primary" onclick="openFeedback(' + o.id + ')">Đánh giá CL</button>';
+      }
+      if (o.qualityFeedbackSubmitted) {
+        btns += ' <span class="text-muted" style="font-size:.72rem;">Đã ĐG</span>';
+      }
+      return '<tr>' +
+        '<td><span class="mono">#ORD-' + o.id + '</span></td>' +
+        '<td style="font-size:.8rem;line-height:1.35;"><span class="text-muted">Đặt:</span> ' + od + '<br><span class="text-muted">Giao dự kiến:</span> ' + dd + '</td>' +
+        '<td>' + stBadge + '</td>' +
+        '<td style="font-size:.8rem;">' + dlv + '</td>' +
+        '<td style="font-size:.8rem;">' + rec + '</td>' +
+        '<td style="white-space:nowrap;">' + btns + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  async function loadInventory() {
+    const r = await fetch(api('/api/store-staff/inventory/' + me.storeId), { credentials: 'same-origin' });
+    if (redir401(r)) return;
+    if (r.status === 403) { toast('Không có quyền xem tồn kho.', false); return; }
+    const rows = await r.json();
+    const tbody = document.querySelector('#inv-table tbody');
+    if (!Array.isArray(rows)) {
+      tbody.innerHTML = '';
+      return;
+    }
+    tbody.innerHTML = rows.map(function (inv) {
+      const p = inv.product || {};
+      const low = inv.quantity < inv.minThreshold;
+      const tag = low
+        ? '<span class="st-badge-low">Dưới ngưỡng</span>'
+        : '<span class="st-badge-ok">Ổn định</span>';
+      return '<tr>' +
+        '<td><strong>' + esc(p.name || '') + '</strong></td>' +
+        '<td>' + esc(p.unit || '') + '</td>' +
+        '<td class="mono" style="font-weight:600;">' + fmtNum(inv.quantity) + '</td>' +
+        '<td class="mono text-muted">' + fmtNum(inv.minThreshold) + '</td>' +
+        '<td><span style="margin-right:6px;">' + tag + '</span>' +
+        '<button type="button" class="btn btn-sm st-delta-btn" data-pid="' + p.id + '" data-pname="' + escAttr(p.name || '') + '">± Điều chỉnh</button></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  window.openStocktakeModal = async function () {
+    try {
+      var rp = await fetch(api('/api/store-staff/products'), { credentials: 'same-origin' });
+      var ri = await fetch(api('/api/store-staff/inventory/' + me.storeId), { credentials: 'same-origin' });
+      if (redir401(rp) || redir401(ri)) return;
+      if (!rp.ok || !ri.ok) { toast('Không tải được danh mục / tồn kho.', false); return; }
+      var products = await rp.json();
+      var invRows = await ri.json();
+      var invBy = {};
+      (invRows || []).forEach(function (inv) {
+        if (inv.product && inv.product.id != null) invBy[inv.product.id] = inv;
+      });
+      var thead = '<thead><tr><th>Sản phẩm</th><th>Tồn hiện tại</th><th>Đếm thực tế</th><th>Ngưỡng mới</th></tr></thead>';
+      var body = (products || []).map(function (p) {
+        var inv = invBy[p.id];
+        var q = inv ? inv.quantity : null;
+        var curAttr = q != null ? String(q) : '';
+        var disp = q != null ? fmtNum(q) : '—';
+        return '<tr><td><strong>' + esc(p.name) + '</strong> <span class="text-muted">(' + esc(p.unit) + ')</span></td>' +
+          '<td class="mono">' + disp + '</td>' +
+          '<td><input type="number" class="sk-counted" data-pid="' + p.id + '" data-current="' + escAttr(curAttr) + '" step="0.01" min="0" placeholder="Bỏ qua"></td>' +
+          '<td><input type="number" class="sk-min" data-pid="' + p.id + '" step="0.01" min="0" placeholder="Giữ nguyên"></td></tr>';
+      }).join('');
+      document.getElementById('sk-table-wrap').innerHTML = '<table>' + thead + '<tbody>' + body + '</tbody></table>';
+      document.getElementById('dlg-stocktake').showModal();
+    } catch (e) {
+      toast('Lỗi: ' + e.message, false);
+    }
+  };
+
+  window.fillStocktakeFromCurrent = function () {
+    document.querySelectorAll('#dlg-stocktake .sk-counted').forEach(function (inp) {
+      var c = inp.getAttribute('data-current');
+      if (c != null && c !== '') inp.value = c;
+    });
+  };
+
+  window.submitStocktake = async function () {
+    var lines = [];
+    document.querySelectorAll('#dlg-stocktake .sk-counted').forEach(function (inp) {
+      var raw = inp.value.trim();
+      if (raw === '') return;
+      var qty = parseFloat(raw.replace(',', '.'));
+      if (isNaN(qty) || qty < 0) return;
+      var pid = parseInt(inp.getAttribute('data-pid'), 10);
+      var line = { productId: pid, countedQuantity: qty };
+      var minEl = document.querySelector('#dlg-stocktake .sk-min[data-pid="' + pid + '"]');
+      if (minEl && minEl.value.trim() !== '') {
+        var m = parseFloat(minEl.value.replace(',', '.'));
+        if (!isNaN(m) && m >= 0) line.minThreshold = m;
+      }
+      lines.push(line);
+    });
+    if (!lines.length) {
+      toast('Nhập ít nhất một dòng đếm thực tế.', false);
+      return;
+    }
+    try {
+      var response = await fetch(api('/api/store-staff/inventory/' + me.storeId + '/stocktake'), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lines: lines, note: null })
+      });
+      if (redir401(response)) return;
+      if (response.ok) {
+        toast('Đã lưu kiểm kê.', true);
+        document.getElementById('dlg-stocktake').close();
+        await reloadAll();
+      } else {
+        var msg = 'Lưu kiểm kê thất bại.';
         try {
-            const response = await fetch(`/api/store-staff/orders/${STORE_ID}`);
-            const orders = await response.json();
-            const tbody = document.querySelector("#order-table tbody");
-            
-            tbody.innerHTML = orders.map(o => `
-                <tr>
-                    <td>#ORD-${o.id}</td>
-                    <td>${new Date(o.orderDate).toLocaleString()}</td>
-                    <td>${o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString() : '-'}</td>
-                    <td><span class="badge badge-status-${o.status.toLowerCase()}">${o.status}</span></td>
-                    <td>
-                        <button class="btn btn-sm" onclick="viewDetail(${o.id})">Chi tiết</button>
-                        ${o.status === 'DELIVERED' ? `<button class="btn btn-sm btn-primary" style="margin-left:5px" onclick="openFeedback(${o.id})">Đánh giá</button>` : ''}
-                    </td>
-                </tr>
-            `).join('');
-        } catch (error) {
-            console.error("Lỗi tải đơn hàng:", error);
-        }
+          var err = await response.json();
+          if (err.message) msg = err.message;
+        } catch (x) { /* ignore */ }
+        toast(msg, false);
+      }
+    } catch (e) {
+      toast('Lỗi: ' + e.message, false);
     }
+  };
 
-    //Mở Modal đặt hàng
-    async function openOrderModal() {
+  window.submitDelta = async function () {
+    var pid = parseInt(document.getElementById('dlt-product-id').value, 10);
+    var delta = parseFloat(String(document.getElementById('dlt-delta').value).replace(',', '.'));
+    if (isNaN(delta)) {
+      toast('Nhập số lượng thay đổi (delta).', false);
+      return;
+    }
+    var note = document.getElementById('dlt-note').value.trim() || null;
+    try {
+      var response = await fetch(api('/api/store-staff/inventory/' + me.storeId + '/delta'), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: pid, delta: delta, note: note })
+      });
+      if (redir401(response)) return;
+      if (response.ok) {
+        toast('Đã cập nhật tồn.', true);
+        document.getElementById('dlg-delta').close();
+        await reloadAll();
+      } else {
+        var msg = 'Không cập nhật được.';
         try {
-            const response = await fetch('/api/store-staff/products');
-            const products = await response.json();
-            const list = document.getElementById('product-selection-list');
-            
-            list.innerHTML = products.map(p => `
-                <div class="product-item" style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;">
-                    <span><strong>${p.name}</strong> (${p.unit})</span>
-                    <input type="number" class="prod-qty" data-id="${p.id}" placeholder="SL" style="width: 70px;" min="0">
-                </div>
-            `).join('');
-            
-            document.getElementById('dlg-order').showModal();
-        } catch (error) {
-            alert("Không thể tải danh sách sản phẩm.");
-        }
+          var err = await response.json();
+          if (err.message) msg = err.message;
+        } catch (x) { /* ignore */ }
+        toast(msg, false);
+      }
+    } catch (e) {
+      toast('Lỗi: ' + e.message, false);
+    }
+  };
+
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+  function fmtNum(n) {
+    if (n == null) return '—';
+    return Number(n).toLocaleString('vi-VN', { maximumFractionDigits: 2 });
+  }
+
+  function catalogSection(title, products) {
+    if (!products || !products.length) return '';
+    var rows = products.map(function (p) {
+      return '<div class="product-item" style="display:flex;justify-content:space-between;margin-bottom:10px;align-items:center;gap:8px;">' +
+        '<span><strong>' + esc(p.name) + '</strong> <span class="text-muted">(' + esc(p.unit) + ')</span></span>' +
+        '<input type="number" class="prod-qty" data-id="' + p.id + '" placeholder="SL" style="width:72px;" min="0" step="0.01">' +
+        '</div>';
+    }).join('');
+    return '<h4 style="margin:10px 0 6px;font-size:0.88rem;color:#334155;">' + esc(title) + '</h4>' + rows;
+  }
+
+  /** Nhóm danh mục giống backend (không phụ thuộc GET /products/catalog) */
+  function groupProductsForOrder(products) {
+    var nl = [], btp = [], tp = [], khac = [];
+    var nlSet = { 'Thịt': true, 'Rau củ': true, 'Gia vị': true };
+    (products || []).forEach(function (p) {
+      var c = (p.category || '').trim();
+      var cLo = c.toLowerCase();
+      if (nlSet[c]) nl.push(p);
+      else if (cLo === 'bán thành phẩm') btp.push(p);
+      else if (cLo === 'thành phẩm') tp.push(p);
+      else khac.push(p);
+    });
+    return { nguyenLieu: nl, banThanhPham: btp, thanhPham: tp, khac: khac };
+  }
+
+  window.openOrderModal = async function () {
+    try {
+      var response = await fetch(api('/api/store-staff/products'), { credentials: 'same-origin' });
+      if (redir401(response)) return;
+      var products;
+      if (response.ok) {
+        products = await response.json();
+      } else {
+        var errMsg = 'Không tải được danh mục đặt hàng.';
+        try {
+          var errBody = await response.json();
+          if (errBody.message) errMsg = errBody.message;
+        } catch (x) { /* ignore */ }
+        toast(errMsg, false);
+        return;
+      }
+      var cat = groupProductsForOrder(products);
+      var list = document.getElementById('product-selection-list');
+      var html = catalogSection('Nguyên liệu', cat.nguyenLieu) +
+        catalogSection('Bán thành phẩm', cat.banThanhPham) +
+        catalogSection('Thành phẩm', cat.thanhPham) +
+        catalogSection('Khác', cat.khac);
+      if (!html) {
+        html = '<p class="text-muted">Không có sản phẩm khả dụng.</p>';
+      }
+      list.innerHTML = html;
+      document.getElementById('dlg-order').showModal();
+    } catch (e) {
+      toast('Lỗi: ' + e.message, false);
+    }
+  };
+
+  window.submitOrder = async function () {
+    const items = [];
+    document.querySelectorAll('.prod-qty').forEach(function (input) {
+      const qty = parseFloat(input.value);
+      if (qty > 0) {
+        items.push({ productId: parseInt(input.dataset.id, 10), quantity: qty, note: '' });
+      }
+    });
+    if (items.length === 0) {
+      toast('Nhập số lượng cho ít nhất một sản phẩm.', false);
+      return;
+    }
+    const rawDate = document.getElementById('delivery-date').value;
+    const body = {
+      deliveryDate: rawDate ? rawDate.replace('T', ' ') + (rawDate.length === 16 ? ':00' : '') : null,
+      note: document.getElementById('order-note').value,
+      items: items
+    };
+    const response = await fetch(api('/api/store-staff/orders'), {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (redir401(response)) return;
+    if (response.ok) {
+      toast('Đã gửi đơn lên bếp trung tâm.', true);
+      document.getElementById('dlg-order').close();
+      await reloadAll();
+    } else {
+      let msg = 'Gửi đơn thất bại.';
+      try {
+        const err = await response.json();
+        if (err.message) msg = err.message;
+      } catch (x) { /* ignore */ }
+      toast(msg, false);
+    }
+  };
+
+  window.viewDetail = async function (orderId) {
+    const response = await fetch(api('/api/store-staff/orders/detail/' + orderId), { credentials: 'same-origin' });
+    if (redir401(response)) return;
+    if (!response.ok) {
+      toast('Không xem được chi tiết đơn.', false);
+      return;
+    }
+    const data = await response.json();
+    document.getElementById('detail-order-id').innerText = '#ORD-' + data.id;
+    document.getElementById('detail-status').textContent = viOrder(data.status);
+    document.getElementById('detail-date').innerText = data.orderDate ? new Date(data.orderDate).toLocaleString('vi-VN') : '—';
+    document.getElementById('detail-deliv-wish').innerText = data.deliveryDate ? new Date(data.deliveryDate).toLocaleString('vi-VN') : '—';
+
+    var dbody = document.getElementById('detail-deliveries-body');
+    var dlist = data.deliveries || [];
+    if (!dlist.length) {
+      dbody.innerHTML = '<tr><td colspan="4" style="padding:8px;border:1px solid #ddd;">Chưa có phiếu giao.</td></tr>';
+    } else {
+      dbody.innerHTML = dlist.map(function (d) {
+        var sch = d.scheduledAt ? new Date(d.scheduledAt).toLocaleString('vi-VN') : '—';
+        var act = d.actualAt ? new Date(d.actualAt).toLocaleString('vi-VN') : '—';
+        return '<tr><td style="padding:6px;border:1px solid #ddd;" class="mono">#' + d.id + '</td>' +
+          '<td style="padding:6px;border:1px solid #ddd;">' + esc(viDlv(d.status)) + '</td>' +
+          '<td style="padding:6px;border:1px solid #ddd;font-size:.78rem;">' + sch + '</td>' +
+          '<td style="padding:6px;border:1px solid #ddd;font-size:.78rem;">' + act + '</td></tr>';
+      }).join('');
     }
 
-    //Gửi đơn hàng
-    async function submitOrder() {
-        const items = [];
-        document.querySelectorAll('.prod-qty').forEach(input => {
-            const qty = parseFloat(input.value);
-            if (qty > 0) {
-                items.push({
-                    productId: parseInt(input.dataset.id),
-                    quantity: qty,
-                    note: ""
-                });
-            }
-        });
-
-        if (items.length === 0) {
-            alert("Vui lòng nhập số lượng cho ít nhất một sản phẩm!");
-            return;
-        }
-
-        const data = {
-            storeId: STORE_ID,
-            userId: USER_ID,
-            deliveryDate: document.getElementById('delivery-date').value,
-            note: document.getElementById('order-note').value,
-            items: items
-        };
-
-        const response = await fetch('/api/store-staff/orders', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
-
-        if(response.ok) {
-            alert("Đặt hàng thành công!");
-            document.getElementById('dlg-order').close();
-            loadOrders();
-        } else {
-            alert("Gửi đơn hàng thất bại.");
-        }
+    var recEl = document.getElementById('detail-receipt-line');
+    if (data.storeReceiptConfirmedAt) {
+      recEl.innerHTML = '<strong>Đã xác nhận nhận hàng:</strong> ' + new Date(data.storeReceiptConfirmedAt).toLocaleString('vi-VN');
+    } else if (data.status === 'DELIVERED') {
+      recEl.innerHTML = '<strong>Nhận hàng tại cửa hàng:</strong> <span class="st-badge-low">Chưa xác nhận — bấm nút bên dưới sau khi kiểm đếm.</span>';
+    } else {
+      recEl.innerHTML = '<strong>Nhận hàng tại cửa hàng:</strong> Chỉ khả dụng khi đơn ở trạng thái Đã giao.';
     }
 
-    //Xem chi tiết
-    async function viewDetail(orderId) {
-        const response = await fetch(`/api/store-staff/orders/detail/${orderId}`);
-        const data = await response.json();
-
-        document.getElementById('detail-order-id').innerText = `#ORD-${data.id}`;
-        document.getElementById('detail-status').innerText = data.status;
-        document.getElementById('detail-date').innerText = new Date(data.orderDate).toLocaleString();
-
-        const tbody = document.getElementById('detail-items-body');
-        tbody.innerHTML = data.items.map(item => `
-            <tr>
-                <td style="padding: 8px; border: 1px solid #ddd;">${item.productName}</td>
-                <td style="padding: 8px; border: 1px solid #ddd;">${item.quantity}</td>
-                <td style="padding: 8px; border: 1px solid #ddd;">${item.productUnit}</td>
-            </tr>
-        `).join('');
-
-        document.getElementById('dlg-detail').showModal();
+    var fbEl = document.getElementById('detail-fb-line');
+    if (data.qualityFeedbackSubmitted) {
+      fbEl.innerHTML = '<strong>Phản hồi chất lượng:</strong> Đã gửi' + (data.qualityFeedbackRating != null ? ' (' + data.qualityFeedbackRating + '/5)' : '') + '.';
+    } else if (data.storeReceiptConfirmedAt && data.status === 'DELIVERED') {
+      fbEl.innerHTML = '<strong>Phản hồi chất lượng:</strong> Có thể gửi sau khi đã xác nhận nhận hàng.';
+    } else {
+      fbEl.innerHTML = '<strong>Phản hồi chất lượng:</strong> —';
     }
 
-    // Đánh giá 
-    function openFeedback(orderId) {
-        document.getElementById('fb-order-id').value = orderId;
-        document.getElementById('fb-comment').value = "";
-        document.getElementById('dlg-feedback').showModal();
+    const tbody = document.getElementById('detail-items-body');
+    tbody.innerHTML = (data.items || []).map(function (item) {
+      var del = item.quantityDelivered != null && item.quantityDelivered > 0 ? fmtNum(item.quantityDelivered) : '—';
+      return '<tr><td style="padding:8px;border:1px solid #ddd;">' + esc(item.productName) + '</td>' +
+        '<td style="padding:8px;border:1px solid #ddd;" class="mono">' + fmtNum(item.quantity) + '</td>' +
+        '<td style="padding:8px;border:1px solid #ddd;" class="mono">' + del + '</td>' +
+        '<td style="padding:8px;border:1px solid #ddd;">' + esc(item.productUnit) + '</td></tr>';
+    }).join('');
+
+    var foot = document.getElementById('detail-footer');
+    var f = '<button type="button" class="btn btn-secondary" onclick="document.getElementById(\'dlg-detail\').close()">Đóng</button>';
+    if (data.status === 'DELIVERED' && !data.storeReceiptConfirmedAt) {
+      f += ' <button type="button" class="btn btn-primary" onclick="confirmReceipt(' + orderId + ')">Xác nhận đã nhận hàng</button>';
     }
-
-    async function submitFeedback() {
-        const orderId = document.getElementById('fb-order-id').value;
-        const rating = document.getElementById('fb-rating').value;
-        const comment = document.getElementById('fb-comment').value;
-
-        const response = await fetch('/api/store-staff/feedback', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                delivery: { id: orderId },
-                submittedBy: { id: USER_ID },
-                rating: parseInt(rating),
-                comment: comment
-            })
-        });
-
-        if(response.ok) {
-            alert("Cảm ơn bạn đã phản hồi!");
-            document.getElementById('dlg-feedback').close();
-        } else {
-            alert("Không thể gửi phản hồi.");
-        }
+    if (data.storeReceiptConfirmedAt && !data.qualityFeedbackSubmitted && data.status === 'DELIVERED') {
+      f += ' <button type="button" class="btn btn-primary" onclick="document.getElementById(\'dlg-detail\').close();openFeedback(' + orderId + ')">Gửi đánh giá chất lượng</button>';
     }
+    foot.innerHTML = f;
+    document.getElementById('dlg-detail').showModal();
+  };
 
-    window.onload = loadOrders;
+  window.confirmReceipt = async function (orderId) {
+    if (!confirm('Xác nhận cửa hàng đã nhận đủ hàng theo đơn #ORD-' + orderId + '?\nTồn kho sẽ được cộng theo số lượng giao (hoặc số đặt nếu chưa ghi nhận giao).')) return;
+    try {
+      var response = await fetch(api('/api/store-staff/orders/' + orderId + '/confirm-receipt'), {
+        method: 'POST',
+        credentials: 'same-origin'
+      });
+      if (redir401(response)) return;
+      if (response.ok) {
+        toast('Đã xác nhận nhận hàng và cập nhật tồn kho.', true);
+        var dlgD = document.getElementById('dlg-detail');
+        if (dlgD.open) dlgD.close();
+        await reloadAll();
+      } else {
+        var msg = 'Không xác nhận được.';
+        try {
+          var err = await response.json();
+          if (err.message) msg = err.message;
+        } catch (x) { /* ignore */ }
+        toast(msg, false);
+      }
+    } catch (e) {
+      toast('Lỗi: ' + e.message, false);
+    }
+  };
+
+  window.openFeedback = function (orderId) {
+    document.getElementById('fb-order-id').value = orderId;
+    document.getElementById('fb-comment').value = '';
+    document.getElementById('dlg-feedback').showModal();
+  };
+
+  window.submitFeedback = async function () {
+    const orderId = parseInt(document.getElementById('fb-order-id').value, 10);
+    const rating = parseInt(document.getElementById('fb-rating').value, 10);
+    const comment = document.getElementById('fb-comment').value;
+    const response = await fetch(api('/api/store-staff/feedback'), {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId: orderId, rating: rating, comment: comment })
+    });
+    if (redir401(response)) return;
+    if (response.ok) {
+      toast('Cảm ơn bạn đã phản hồi!', true);
+      document.getElementById('dlg-feedback').close();
+      await reloadAll();
+    } else {
+      let msg = 'Không gửi được đánh giá.';
+      try {
+        const err = await response.json();
+        if (err.message) msg = err.message;
+      } catch (x) { /* ignore */ }
+      toast(msg, false);
+    }
+  };
+
+  boot().catch(function (e) { toast('Lỗi: ' + e.message, false); });
+})();
 </script>
 </body>
 </html>

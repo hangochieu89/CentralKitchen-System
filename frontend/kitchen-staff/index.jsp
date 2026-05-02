@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet" />
 </head>
 <body>
+<script>window.APP_CTX = '${pageContext.request.contextPath}';</script>
 
 <!-- ════════════════ HEADER ════════════════ -->
 <header>
@@ -20,9 +21,12 @@
   </div>
   <nav class="top-nav" aria-label="Top navigation"></nav>
   <div class="user-chip">
-    <div class="avatar">NK</div>
-    <span>Đình Phát &mdash; <span style="color:var(--accent);font-weight:600;">Bếp Trung Tâm</span></span>
-    <a href="/auth/logout" class="btn btn-ghost btn-sm" style="margin-left:8px;">🚪 Đăng xuất</a>
+    <div class="avatar">CK</div>
+    <span>
+      <c:out value="${currentUser != null ? currentUser.fullName : '—'}"/>
+      <span style="color:var(--accent);font-weight:600;"> — NV Bếp</span>
+    </span>
+    <a href="${pageContext.request.contextPath}/auth/logout" class="btn btn-ghost btn-sm" style="margin-left:8px;">🚪 Đăng xuất</a>
   </div>
 </header>
 
@@ -446,6 +450,7 @@
 
 <!-- ════════════════ JS ════════════════ -->
 <script>
+const CTX = typeof window.APP_CTX === 'string' ? window.APP_CTX : '';
 // ── Page navigation ───────────────────────────────────────
 const pages = {
   dashboard:'page-dashboard', orders:'page-orders',
@@ -494,7 +499,7 @@ function showToast(msg, isError) {
 // ── Update order status ───────────────────────────────────
 async function updateOrderStatus(orderId, newStatus) {
   try {
-    const r = await fetch('/kitchen-staff/orders/'+orderId+'/status?status='+newStatus, {
+    const r = await fetch(CTX + '/kitchen-staff/orders/'+orderId+'/status?status='+newStatus, {
       method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}
     });
     if (r.ok) { showToast('Đã cập nhật đơn #ORD-'+orderId+' → '+getStatusLabel(newStatus)); setTimeout(()=>location.reload(),900); }
@@ -522,11 +527,12 @@ function openOrderDialog(oid) {
       itemsEl.innerHTML += '<div class="item-row"><span class="item-name">'+item.dataset.name+'</span><span class="item-qty">'+item.dataset.qty+' '+item.dataset.unit+'</span></div>';
     });
   }
-  const next={PENDING:'CONFIRMED',CONFIRMED:'IN_PRODUCTION',IN_PRODUCTION:'READY'};
-  const lab={PENDING:'✓ Xác nhận đơn',CONFIRMED:'▶ Bắt đầu SX',IN_PRODUCTION:'✅ Sẵn sàng'};
+  const next={CONFIRMED:'IN_PRODUCTION',IN_PRODUCTION:'READY',READY:'DELIVERING',DELIVERING:'DELIVERED'};
+  const lab={CONFIRMED:'▶ Bắt đầu SX',IN_PRODUCTION:'✅ Sẵn sàng',READY:'🚚 Xuất kho / Giao',DELIVERING:'✓ Hoàn tất giao'};
   const btn=document.getElementById('dlg-confirm-btn');
   const st=dataRow.dataset.status;
-  if(next[st]){btn.style.display='';btn.textContent=lab[st];btn.dataset.oid=oid;btn.dataset.next=next[st];}
+  if(st==='PENDING'){btn.style.display='none';}
+  else if(next[st]){btn.style.display='';btn.textContent=lab[st];btn.dataset.oid=oid;btn.dataset.next=next[st];}
   else btn.style.display='none';
   document.getElementById('dlg-order').showModal();
 }
@@ -542,7 +548,7 @@ async function confirmOrderFromDialog() {
 function getActiveOrdersWithItems() {
   const orders = [];
   document.querySelectorAll('[id^="order-data-"]').forEach(div => {
-    if (!['PENDING','CONFIRMED'].includes(div.dataset.status)) return;
+    if (!['CONFIRMED','IN_PRODUCTION'].includes(div.dataset.status)) return;
     const items = [];
     div.querySelectorAll('.order-item-entry').forEach(item => {
       items.push({ productName: item.dataset.name, qty: parseFloat(item.dataset.qty)||0, unit: item.dataset.unit });
@@ -635,7 +641,7 @@ async function savePlan() {
     orderItems.push({ orderId: parseInt(cb.dataset.orderId), quantity: parseFloat(cb.dataset.qty) });
   });
   try {
-    const r = await fetch('/kitchen-staff/plans', {
+    const r = await fetch(CTX + '/kitchen-staff/plans', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         productId: parseInt(productId),
@@ -661,7 +667,7 @@ async function saveBatch() {
   const exp       = document.getElementById('batch-exp').value;
   if (!productId||!storeId||!batchNum||!qty||!mfg||!exp) { showToast('Vui lòng điền đầy đủ thông tin.',true); return; }
   try {
-    const r = await fetch('/kitchen-staff/batches', {
+    const r = await fetch(CTX + '/kitchen-staff/batches', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({productId:parseInt(productId),storeId:parseInt(storeId),batchNumber:batchNum,quantity:parseFloat(qty),manufactureDate:mfg,expirationDate:exp})
     });
@@ -685,7 +691,7 @@ async function submitBatchUpdate() {
   const qty = document.getElementById('upd-batch-qty').value;
   const exp = document.getElementById('upd-batch-exp').value;
   try {
-    const r = await fetch('/kitchen-staff/batches/'+id, {
+    const r = await fetch(CTX + '/kitchen-staff/batches/'+id, {
       method:'PUT', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({quantityRemaining:parseFloat(qty), expirationDate:exp})
     });
@@ -703,7 +709,7 @@ async function saveInventoryInput() {
   const min       = document.getElementById('inv-min').value;
   if (!productId||!storeId||!qty) { showToast('Vui lòng điền đầy đủ thông tin.',true); return; }
   try {
-    const r = await fetch('/kitchen-staff/inventory', {
+    const r = await fetch(CTX + '/kitchen-staff/inventory', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({productId:parseInt(productId),storeId:parseInt(storeId),quantity:parseFloat(qty),minThreshold:min?parseFloat(min):0})
     });
@@ -728,7 +734,7 @@ async function submitInvUpdate() {
   const qty = document.getElementById('inv-detail-qty').value;
   const min = document.getElementById('inv-detail-min').value;
   try {
-    const r = await fetch('/kitchen-staff/inventory/'+id, {
+    const r = await fetch(CTX + '/kitchen-staff/inventory/'+id, {
       method:'PUT', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({quantity:parseFloat(qty),minThreshold:parseFloat(min)})
     });
@@ -756,7 +762,7 @@ async function submitPlanUpdate() {
   const note   = document.getElementById('upd-plan-note').value;
   const asgn   = document.getElementById('upd-plan-assignee').value;
   try {
-    const r = await fetch('/kitchen-staff/plans/'+id, {
+    const r = await fetch(CTX + '/kitchen-staff/plans/'+id, {
       method:'PUT', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({status, note, assignedToId: asgn ? parseInt(asgn) : null})
     });
@@ -779,7 +785,7 @@ async function saveInput() {
   const exp        = document.getElementById('inp-exp').value;
   if (!productId||!supplierId||!kitchenId||!qty||!exp) { showToast('Vui lòng điền đầy đủ thông tin.',true); return; }
   try {
-    const r = await fetch('/kitchen-staff/inputs', {
+    const r = await fetch(CTX + '/kitchen-staff/inputs', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({productId:parseInt(productId),supplierId:parseInt(supplierId),kitchenId:parseInt(kitchenId),batchNumber:batchNum,quantity:parseFloat(qty),expirationDate:exp})
     });

@@ -7,9 +7,13 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -17,6 +21,26 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+
+    /** Thông tin user đang đăng nhập (cho SPA supply-coordinator, v.v.) */
+    @GetMapping("/api/session/me")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> currentUser(HttpSession session) {
+        User raw = (User) session.getAttribute("currentUser");
+        if (raw == null) {
+            return ResponseEntity.status(401).build();
+        }
+        User u = userRepository.findByIdWithStore(raw.getId()).orElse(raw);
+        session.setAttribute("currentUser", u);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("id", u.getId());
+        body.put("username", u.getUsername());
+        body.put("fullName", u.getFullName());
+        body.put("role", u.getRole());
+        body.put("storeId", u.getStore() != null ? u.getStore().getId() : null);
+        body.put("storeName", u.getStore() != null ? u.getStore().getName() : null);
+        return ResponseEntity.ok(body);
+    }
 
     // ── Hiển thị trang login ──────────────────────────────────────
     @GetMapping("/login")
@@ -46,10 +70,12 @@ public class AuthController {
             model.addAttribute("error", "Tên đăng nhập hoặc mật khẩu không đúng.");
             return "forward:/login/index.jsp";
         }
-        
+
+        // Nạp lại user + cửa hàng (JOIN FETCH) để session luôn có store cho STORE_STAFF — tránh 403 API cửa hàng
+        User sessionUser = userRepository.findByIdWithStore(user.getId()).orElse(user);
 
         // Lưu user vào session (30 phút timeout)
-        session.setAttribute("currentUser", user);
+        session.setAttribute("currentUser", sessionUser);
         session.setMaxInactiveInterval(30 * 60);
 
         return redirectByRole(user);

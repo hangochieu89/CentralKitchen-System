@@ -13,4 +13,6 @@ public interface QualityFeedbackRepository extends JpaRepository<QualityFeedback
 
     // Tìm các phản hồi được gửi bởi một nhân viên cụ thể
     List<QualityFeedback> findBySubmittedById(Integer userId);
+
+    boolean existsByDelivery_Id(Integer deliveryId);
 }

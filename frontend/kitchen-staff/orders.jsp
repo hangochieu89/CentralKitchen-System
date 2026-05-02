@@ -7,7 +7,7 @@
     <div class="page-header">
       <hgroup>
         <h1>Tiếp nhận đơn hàng</h1>
-        <p>Quản lý đơn đặt hàng từ các cửa hàng franchise</p>
+        <p>Đơn ở trạng thái <strong>Chờ xử lý</strong> do <strong>Điều phối cung ứng</strong> xác nhận trước; bếp xử lý từ <strong>Đã xác nhận</strong> (sản xuất → sẵn sàng → xuất kho / giao).</p>
       </hgroup>
     </div>
 
@@ -174,8 +174,11 @@ function selectOrder(oid) {
 }
 
 function buildActionButtons(oid, status) {
-  const next   = {PENDING:'CONFIRMED', CONFIRMED:'IN_PRODUCTION', IN_PRODUCTION:'READY'};
-  const labels = {PENDING:'✓ Xác nhận đơn hàng', CONFIRMED:'▶ Bắt đầu sản xuất', IN_PRODUCTION:'✅ Đánh dấu sẵn sàng'};
+  if (status === 'PENDING') {
+    return '<p class="text-muted" style="font-size:.82rem;padding:8px 0;">Đơn đang chờ Điều phối cung ứng xác nhận — không thao tác tại bếp.</p>';
+  }
+  const next   = {CONFIRMED:'IN_PRODUCTION', IN_PRODUCTION:'READY', READY:'DELIVERING', DELIVERING:'DELIVERED'};
+  const labels = {CONFIRMED:'▶ Bắt đầu sản xuất', IN_PRODUCTION:'✅ Đánh dấu sẵn sàng', READY:'🚚 Xuất kho / Đang giao', DELIVERING:'✓ Hoàn tất giao hàng'};
   if (!next[status]) return '';
   return '<button class="btn btn-primary" onclick="updateOrderStatus('+oid+',\''+next[status]+'\')">'+labels[status]+'</button>';
 }

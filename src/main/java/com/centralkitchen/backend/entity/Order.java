@@ -37,6 +37,10 @@ public class Order {
     @Column(length = 500)
     private String note;
 
+    /** Cửa hàng xác nhận đã nhận đủ hàng (sau khi phiếu giao DELIVERED) — mở khóa đánh giá & cộng tồn kho. */
+    @Column(name = "store_receipt_confirmed_at")
+    private LocalDateTime storeReceiptConfirmedAt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 

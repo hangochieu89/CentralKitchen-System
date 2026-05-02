@@ -6,7 +6,7 @@
     <div class="page-header">
       <hgroup>
         <h1>Xuất kho &amp; Giao hàng</h1>
-        <p>Xác nhận xuất kho và theo dõi trạng thái vận chuyển đến cửa hàng</p>
+        <p>Bếp xác nhận xuất kho / giao; Điều phối theo dõi lịch &amp; tiến độ vận chuyển tới cửa hàng franchise.</p>
       </hgroup>
     </div>
 
@@ -121,7 +121,7 @@ function filterDispatch() {
 async function confirmDispatch(orderId) {
   if (!confirm('Xác nhận xuất kho cho đơn #ORD-'+orderId+'?')) return;
   try {
-    const r = await fetch('/kitchen-staff/orders/'+orderId+'/status?status=DELIVERING',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}});
+    const r = await fetch((window.APP_CTX||'') + '/kitchen-staff/orders/'+orderId+'/status?status=DELIVERING',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}});
     if (r.ok) { showToast('Đã xác nhận xuất kho đơn #ORD-'+orderId); setTimeout(()=>location.reload(),800); }
     else alert('Lỗi cập nhật trạng thái. Vui lòng thử lại.');
   } catch(e) { alert('Lỗi kết nối: '+e.message); }
@@ -130,7 +130,7 @@ async function confirmDispatch(orderId) {
 async function confirmDelivered(orderId) {
   if (!confirm('Xác nhận đã giao xong đơn #ORD-'+orderId+'?')) return;
   try {
-    const r = await fetch('/kitchen-staff/orders/'+orderId+'/status?status=DELIVERED',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}});
+    const r = await fetch((window.APP_CTX||'') + '/kitchen-staff/orders/'+orderId+'/status?status=DELIVERED',{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}});
     if (r.ok) { showToast('Đã xác nhận giao thành công đơn #ORD-'+orderId); setTimeout(()=>location.reload(),800); }
     else alert('Lỗi cập nhật trạng thái. Vui lòng thử lại.');
   } catch(e) { alert('Lỗi kết nối: '+e.message); }

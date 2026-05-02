@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Điều phối cung ứng — Central Kitchen &amp; Franchise</title>
+  <link rel="stylesheet" href="../css/kitchen-staff-styles.css">
+  <style>
+    .sc-body { min-height: 100vh; background: var(--gray-50, #f8fafc); }
+    .sc-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #334155 100%);
+      color: #f8fafc;
+      padding: 1.1rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      border-bottom: 3px solid var(--accent, #e05c2a);
+    }
+    .sc-header .brand { font-weight: 700; letter-spacing: 0.02em; }
+    .sc-header .sub { font-size: 0.78rem; opacity: 0.88; max-width: 42rem; line-height: 1.45; margin-top: 4px; }
+    .sc-user { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+    body.sc-body > .sc-wrap {
+      grid-column: 2 / -1;
+      grid-row: 2;
+      min-width: 0;
+    }
+    .sc-wrap {
+      max-width: none;
+      width: 100%;
+      margin: 0;
+      padding: 1.25rem clamp(1rem, 2.5vw, 2.5rem) 2.5rem;
+    }
+    .sc-intro {
+      background: #fff;
+      border: 1px solid var(--gray-200, #e2e8f0);
+      border-radius: var(--radius, 10px);
+      padding: 1rem 1.15rem;
+      margin-bottom: 1rem;
+      font-size: 0.84rem;
+      color: var(--gray-600, #475569);
+      line-height: 1.55;
+    }
+    .sc-intro strong { color: var(--gray-800, #1e293b); }
+    .sc-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+    .sc-tab {
+      border: 1px solid var(--gray-200, #e2e8f0);
+      background: #fff;
+      padding: 0.45rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--gray-600, #475569);
+    }
+    .sc-tab:hover { border-color: var(--accent, #e05c2a); color: var(--accent, #e05c2a); }
+    .sc-tab.active { background: var(--accent, #e05c2a); color: #fff; border-color: var(--accent, #e05c2a); }
+    .sc-msg { font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.25em; }
+    .sc-msg.err { color: #b91c1c; }
+    .sc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
+      gap: 1.25rem;
+    }
+    .sc-card {
+      background: #fff;
+      border: 1px solid var(--gray-200, #e2e8f0);
+      border-radius: var(--radius, 10px);
+      padding: 1rem 1.05rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .sc-card:hover { box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08); border-color: #cbd5e1; }
+    .sc-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+    .sc-card-id { font-family: var(--font-mono, monospace); font-weight: 700; font-size: 0.95rem; color: var(--gray-800, #1e293b); }
+    .sc-card-store { font-weight: 600; font-size: 0.88rem; color: var(--gray-800, #1e293b); }
+    .sc-card-meta { font-size: 0.78rem; color: var(--gray-500, #64748b); line-height: 1.4; }
+    .sc-lines { margin: 0; padding-left: 1rem; font-size: 0.78rem; color: var(--gray-600, #475569); max-height: 5.2rem; overflow: auto; }
+    .sc-lines li { margin-bottom: 0.2rem; }
+    .sc-card-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem; padding-top: 0.5rem; border-top: 1px dashed var(--gray-200, #e2e8f0); }
+    .sc-card-actions .btn { font-size: 0.75rem; padding: 0.28rem 0.55rem; }
+    .sc-dlv-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; background: #fff; border-radius: var(--radius, 10px); overflow: hidden; border: 1px solid var(--gray-200, #e2e8f0); }
+    .sc-dlv-table th, .sc-dlv-table td { padding: 0.55rem 0.65rem; border-bottom: 1px solid var(--gray-100, #f1f5f9); text-align: left; }
+    .sc-dlv-table th { background: var(--gray-50, #f8fafc); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--gray-500, #64748b); }
+    #dlg-order { width: min(560px, 96vw); }
+    #dlg-order .item-list { max-height: 220px; overflow: auto; }
+    .sc-toast {
+      position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 9999;
+      padding: 0.65rem 1rem; border-radius: 8px; font-size: 0.85rem;
+      color: #fff; background: #0f172a; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .sc-toast.show { opacity: 1; }
+    .sc-toast.ok { background: #15803d; }
+    .sc-toast.bad { background: #b91c1c; }
+  </style>
+</head>
+<body class="sc-body">
+<header class="sc-header">
+  <div>
+    <div class="brand">Điều phối cung ứng · Supply Coordinator</div>
+    <div class="sub">Tổng hợp đơn từ cửa hàng franchise, <strong>phân loại &amp; xác nhận</strong>, phối hợp sản xuất/bếp, <strong>lập lịch giao</strong> và xử lý giao trễ / thiếu hàng / hủy đơn.</div>
+  </div>
+  <div class="sc-user">
+    <span id="user-label">…</span>
+    <a id="logout-link" class="btn btn-ghost btn-sm" href="/auth/logout" style="color:#f8fafc;border-color:rgba(248,250,252,.35);">Đăng xuất</a>
+  </div>
+</header>
+
+<div class="sc-wrap">
+  <div class="sc-intro">
+    <strong>Central Kitchen and Franchise Store Management.</strong>
+    Bếp trung tâm sản xuất — cung ứng cho nhiều cửa hàng; bạn đảm bảo <strong>đồng bộ đơn đặt · tồn · phân phối · chất lượng vận hành</strong> theo thời gian thực, giảm lãng phí chuỗi franchise.
+  </div>
+
+  <nav class="sc-tabs" id="sc-tabs" aria-label="Khu vực làm việc">
+    <button type="button" class="sc-tab active" data-view="pending">1 · Cần duyệt (PENDING)</button>
+    <button type="button" class="sc-tab" data-view="confirmed">2 · Đã xác nhận</button>
+    <button type="button" class="sc-tab" data-view="pipeline">3 · Chuỗi cung ứng (bếp)</button>
+    <button type="button" class="sc-tab" data-view="deliveries">4 · Giao hàng của tôi</button>
+    <button type="button" class="sc-tab" data-view="overdue">5 · Giao quá hạn</button>
+  </nav>
+
+  <p id="sc-msg" class="sc-msg"></p>
+  <div id="sc-content"></div>
+</div>
+
+<dialog id="dlg-order">
+  <header><h3 id="dlg-order-title">Chi tiết đơn</h3></header>
+  <div class="dialog-body">
+    <div class="form-grid" style="margin-bottom:10px;">
+      <div class="form-group"><label>Cửa hàng</label><p id="dlg-o-store" class="fw7" style="margin:0;"></p></div>
+      <div class="form-group"><label>Trạng thái</label><p id="dlg-o-status" style="margin:0;"></p></div>
+      <div class="form-group"><label>Người đặt</label><p id="dlg-o-by" style="margin:0;"></p></div>
+      <div class="form-group"><label>Ngày giao dự kiến</label><p id="dlg-o-deliv" class="mono" style="margin:0;"></p></div>
+    </div>
+    <p style="font-size:.75rem;font-weight:600;color:var(--gray-500);margin-bottom:6px;">Dòng hàng</p>
+    <div id="dlg-o-items" class="item-list"></div>
+    <div class="form-group" style="margin-top:10px;"><label>Ghi chú</label><p id="dlg-o-note" class="text-muted" style="margin:0;font-size:.85rem;"></p></div>
+  </div>
+  <footer id="dlg-o-footer" style="display:flex;flex-wrap:wrap;gap:8px;"></footer>
+</dialog>
+
+<dialog id="dlg-schedule">
+  <header><h3>Lập lịch giao hàng</h3></header>
+  <div class="dialog-body">
+    <input type="hidden" id="sch-order-id">
+    <p class="text-muted" style="font-size:.8rem;margin-bottom:10px;">Chỉ lập lịch khi bếp đã chuyển đơn sang <strong>READY</strong> (sẵn sàng giao).</p>
+    <div class="form-group">
+      <label>Thời gian giao dự kiến</label>
+      <input type="datetime-local" id="sch-when" style="width:100%;padding:8px;">
+    </div>
+    <div class="form-group">
+      <label>Ghi chú</label>
+      <textarea id="sch-note" rows="2" style="width:100%;" placeholder="Hướng dẫn giao, khung giờ cửa hàng…"></textarea>
+    </div>
+  </div>
+  <footer>
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('dlg-schedule').close()">Hủy</button>
+    <button type="button" class="btn btn-primary" onclick="submitSchedule()">Lưu lịch</button>
+  </footer>
+</dialog>
+
+<dialog id="dlg-delivery-status">
+  <header><h3>Cập nhật trạng thái giao</h3></header>
+  <div class="dialog-body">
+    <input type="hidden" id="upd-delivery-id">
+    <div class="form-group">
+      <label>Trạng thái mới</label>
+      <select id="upd-delivery-status" style="width:100%;padding:8px;">
+        <option value="IN_TRANSIT">Đang giao (IN_TRANSIT)</option>
+        <option value="DELIVERED">Đã giao (DELIVERED)</option>
+        <option value="FAILED">Thất bại (FAILED)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Thời điểm thực tế (nếu có)</label>
+      <input type="datetime-local" id="upd-delivery-actual" style="width:100%;padding:8px;">
+    </div>
+    <div class="form-group">
+      <label>Ghi chú</label>
+      <textarea id="upd-delivery-note" rows="2" style="width:100%;"></textarea>
+    </div>
+  </div>
+  <footer>
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('dlg-delivery-status').close()">Hủy</button>
+    <button type="button" class="btn btn-primary" onclick="submitDeliveryStatus()">Cập nhật</button>
+  </footer>
+</dialog>
+
+<div id="sc-toast" class="sc-toast" role="status"></div>
+
+<script>
+(function () {
+  const idx = location.pathname.indexOf('/supply-coordinator/');
+  const ctx = idx >= 0 ? location.pathname.substring(0, idx) : '';
+  const api = (path) => ctx + path;
+
+  const ST_VI = {
+    PENDING: 'Chờ điều phối', CONFIRMED: 'Đã xác nhận', IN_PRODUCTION: 'Đang SX',
+    READY: 'Sẵn sàng giao', DELIVERING: 'Đang giao', DELIVERED: 'Đã giao', CANCELLED: 'Đã hủy'
+  };
+
+  let me = null;
+  let orderCache = {};
+  let currentView = 'pending';
+
+  function toast(msg, ok) {
+    const t = document.getElementById('sc-toast');
+    t.textContent = msg;
+    t.className = 'sc-toast show ' + (ok ? 'ok' : 'bad');
+    setTimeout(function () { t.classList.remove('show', 'ok', 'bad'); }, 2600);
+  }
+
+  function setMsg(text, isErr) {
+    const el = document.getElementById('sc-msg');
+    el.textContent = text || '';
+    el.className = 'sc-msg' + (isErr ? ' err' : '');
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function fmtDt(v) {
+    if (!v) return '—';
+    try { return new Date(v).toLocaleString('vi-VN'); } catch (e) { return String(v); }
+  }
+
+  function cacheOrders(list) {
+    (list || []).forEach(function (o) { orderCache[o.id] = o; });
+  }
+
+  function linesHtml(o) {
+    const items = o.items || [];
+    if (!items.length) return '<p class="text-muted" style="font-size:.78rem;margin:0;">Không có dòng hàng.</p>';
+    const lis = items.map(function (it) {
+      return '<li>' + escapeHtml(it.productName || '') + ' — <strong>' + (it.quantity != null ? it.quantity : '') + '</strong> ' + escapeHtml(it.productUnit || '') + '</li>';
+    }).join('');
+    return '<ul class="sc-lines">' + lis + '</ul>';
+  }
+
+  function cardHtml(o) {
+    const st = o.status || '';
+    const badge = '<span class="badge">' + escapeHtml(ST_VI[st] || st) + '</span>';
+    const meta = 'Đặt: ' + fmtDt(o.orderDate) + (o.deliveryDate ? ' · Giao: ' + fmtDt(o.deliveryDate) : '');
+    const schOnlyReady = st === 'READY';
+    const canConfirm = st === 'PENDING';
+    const canCancel = st !== 'DELIVERED' && st !== 'CANCELLED';
+    let btns = '<button type="button" class="btn btn-secondary btn-sm" data-act="detail" data-id="' + o.id + '">Chi tiết</button>';
+    if (canConfirm) btns += '<button type="button" class="btn btn-primary btn-sm" data-act="confirm" data-id="' + o.id + '">Xác nhận đơn</button>';
+    if (schOnlyReady) btns += '<button type="button" class="btn btn-sm" data-act="schedule" data-id="' + o.id + '">Lập lịch giao</button>';
+    if (canCancel) btns += '<button type="button" class="btn btn-ghost btn-sm" data-act="cancel" data-id="' + o.id + '">Hủy đơn</button>';
+    return (
+      '<article class="sc-card" data-order-id="' + o.id + '">' +
+        '<div class="sc-card-top"><span class="sc-card-id">#ORD-' + o.id + '</span>' + badge + '</div>' +
+        '<div class="sc-card-store">' + escapeHtml(o.storeName || '') + '</div>' +
+        '<div class="sc-card-meta">' + meta + '</div>' +
+        linesHtml(o) +
+        '<div class="sc-card-actions">' + btns + '</div>' +
+      '</article>'
+    );
+  }
+
+  function renderOrderGrid(title, list) {
+    cacheOrders(list);
+    const inner = (list && list.length)
+      ? '<div class="sc-grid">' + list.map(cardHtml).join('') + '</div>'
+      : '<div class="empty-state" style="padding:2rem;background:#fff;border-radius:10px;border:1px solid var(--gray-200);"><div class="empty-icon">📋</div>Không có đơn trong mục này.</div>';
+    document.getElementById('sc-content').innerHTML = '<h2 style="font-size:1rem;margin:0 0 0.75rem;color:var(--gray-700);">' + escapeHtml(title) + '</h2>' + inner;
+  }
+
+  function rowDelivery(d) {
+    const st = d.status || '';
+    const sch = fmtDt(d.scheduledAt);
+    let btns = '';
+    if (st === 'SCHEDULED') btns = '<button type="button" class="btn btn-sm" data-act="dst" data-id="' + d.id + '" data-next="IN_TRANSIT">Bắt đầu giao</button>';
+    if (st === 'IN_TRANSIT') {
+      btns = '<button type="button" class="btn btn-sm btn-primary" data-act="dst" data-id="' + d.id + '" data-next="DELIVERED">Đã giao</button> ' +
+        '<button type="button" class="btn btn-sm btn-secondary" data-act="dfail" data-id="' + d.id + '">Thất bại</button>';
+    }
+    return '<tr><td>#' + d.id + '</td><td>Đơn #' + d.orderId + '</td><td>' + sch + '</td><td><span class="badge">' + escapeHtml(st) + '</span></td><td>' + btns + '</td></tr>';
+  }
+
+  function renderDeliveries(title, list) {
+    const body = (list && list.length) ? list.map(rowDelivery).join('') : '<tr><td colspan="5" style="padding:12px;">Không có phiếu.</td></tr>';
+    document.getElementById('sc-content').innerHTML =
+      '<h2 style="font-size:1rem;margin:0 0 0.75rem;color:var(--gray-700);">' + escapeHtml(title) + '</h2>' +
+      '<table class="sc-dlv-table"><thead><tr><th>Phiếu</th><th>Đơn</th><th>Lịch giao</th><th>TT</th><th>Thao tác</th></tr></thead><tbody>' + body + '</tbody></table>';
+  }
+
+  async function fetchJson(url) {
+    const r = await fetch(url, { credentials: 'same-origin' });
+    return r.json();
+  }
+
+  window.loadView = async function (view) {
+    currentView = view;
+    document.querySelectorAll('.sc-tab').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-view') === view);
+    });
+    setMsg('Đang tải…', false);
+    try {
+      if (view === 'pending') {
+        const j = await fetchJson(api('/api/supply-coordinator/orders/pending'));
+        if (!j.success) { setMsg(j.message || 'Lỗi', true); return; }
+        setMsg('Số đơn: ' + j.count, false);
+        renderOrderGrid('Đơn từ cửa hàng franchise — cần bạn xác nhận hoặc hủy', j.data || []);
+      } else if (view === 'confirmed') {
+        const j = await fetchJson(api('/api/supply-coordinator/orders/status/CONFIRMED'));
+        if (!j.success) { setMsg(j.message || 'Lỗi', true); return; }
+        setMsg('Số đơn: ' + j.count, false);
+        renderOrderGrid('Đã xác nhận — bếp tiếp nhận sản xuất', j.data || []);
+      } else if (view === 'pipeline') {
+        const [a, b, c] = await Promise.all([
+          fetchJson(api('/api/supply-coordinator/orders/status/CONFIRMED')),
+          fetchJson(api('/api/supply-coordinator/orders/status/IN_PRODUCTION')),
+          fetchJson(api('/api/supply-coordinator/orders/status/READY'))
+        ]);
+        if (!a.success || !b.success || !c.success) { setMsg('Lỗi tải chuỗi cung ứng', true); return; }
+        const seen = {};
+        const merged = [];
+        [a, b, c].forEach(function (resp) {
+          (resp.data || []).forEach(function (o) {
+            if (!seen[o.id]) { seen[o.id] = true; merged.push(o); }
+          });
+        });
+        setMsg('Theo dõi ' + merged.length + ' đơn (CONFIRMED / IN_PRODUCTION / READY)', false);
+        renderOrderGrid('Chuỗi cung ứng — phối hợp bếp &amp; lập lịch khi READY', merged);
+      } else if (view === 'deliveries') {
+        const j = await fetchJson(api('/api/supply-coordinator/deliveries/coordinator/' + me.id));
+        if (!j.success) { setMsg(j.message || 'Lỗi', true); return; }
+        setMsg('Phiếu giao của bạn: ' + j.count, false);
+        renderDeliveries('Giao hàng được giao cho bạn', j.data || []);
+      } else if (view === 'overdue') {
+        const j = await fetchJson(api('/api/supply-coordinator/deliveries/overdue'));
+        if (!j.success) { setMsg(j.message || 'Lỗi', true); return; }
+        setMsg('Quá hạn: ' + j.count + ' phiếu', false);
+        renderDeliveries('Phiếu giao quá hạn — cần xử lý', j.data || []);
+      }
+    } catch (e) {
+      setMsg(e.message || 'Lỗi mạng', true);
+    }
+  };
+
+  function openOrderDialog(id) {
+    const o = orderCache[id];
+    if (!o) { toast('Không có dữ liệu đơn trong bộ nhớ tạm — tải lại danh sách.', false); return; }
+    document.getElementById('dlg-order-title').textContent = 'Đơn #ORD-' + id;
+    document.getElementById('dlg-o-store').textContent = o.storeName || '—';
+    document.getElementById('dlg-o-status').innerHTML = '<span class="badge">' + escapeHtml(ST_VI[o.status] || o.status) + '</span>';
+    document.getElementById('dlg-o-by').textContent = o.createdByName || '—';
+    document.getElementById('dlg-o-deliv').textContent = fmtDt(o.deliveryDate);
+    document.getElementById('dlg-o-note').textContent = o.note || '—';
+    const itemsEl = document.getElementById('dlg-o-items');
+    itemsEl.innerHTML = '';
+    (o.items || []).forEach(function (it) {
+      itemsEl.innerHTML += '<div class="item-row"><span class="item-name">' + escapeHtml(it.productName || '') + '</span><span class="item-qty">' + (it.quantity != null ? it.quantity : '') + ' ' + escapeHtml(it.productUnit || '') + '</span></div>';
+    });
+    if (!(o.items || []).length) itemsEl.innerHTML = '<div class="item-row text-muted">Không có dòng hàng.</div>';
+
+    const foot = document.getElementById('dlg-o-footer');
+    foot.innerHTML = '';
+    const st = o.status || '';
+    foot.innerHTML += '<button type="button" class="btn btn-secondary" onclick="document.getElementById(\'dlg-order\').close()">Đóng</button>';
+    if (st === 'PENDING') {
+      foot.innerHTML += '<button type="button" class="btn btn-primary" onclick="doConfirm(' + id + ')">Xác nhận đơn</button>';
+      foot.innerHTML += '<button type="button" class="btn btn-ghost" onclick="doCancel(' + id + ')">Hủy đơn…</button>';
+    }
+    if (st === 'READY') {
+      foot.innerHTML += '<button type="button" class="btn btn-primary" onclick="document.getElementById(\'dlg-order\').close();openSchedule(' + id + ')">Lập lịch giao</button>';
+    }
+    document.getElementById('dlg-order').showModal();
+  }
+
+  window.openSchedule = function (id) {
+    document.getElementById('sch-order-id').value = id;
+    document.getElementById('sch-when').value = '';
+    document.getElementById('sch-note').value = '';
+    document.getElementById('dlg-schedule').showModal();
+  };
+
+  window.doConfirm = async function (id) {
+    if (!confirm('Xác nhận đơn #ORD-' + id + '?\nĐơn chuyển sang CONFIRMED để bếp xử lý.')) return;
+    const r = await fetch(api('/api/supply-coordinator/orders/' + id + '/confirm'), { method: 'POST', credentials: 'same-origin' });
+    const j = await r.json();
+    toast(j.message || (j.success ? 'Đã xác nhận' : 'Lỗi'), !!j.success);
+    document.getElementById('dlg-order').close();
+    if (j.success) await window.loadView(currentView);
+  };
+
+  window.doCancel = async function (id) {
+    const reason = prompt('Lý do hủy đơn #ORD-' + id + '?', '');
+    if (reason === null) return;
+    const q = reason ? ('?reason=' + encodeURIComponent(reason)) : '';
+    const r = await fetch(api('/api/supply-coordinator/orders/' + id + '/cancel') + q, { method: 'POST', credentials: 'same-origin' });
+    const j = await r.json();
+    toast(j.message || (j.success ? 'Đã hủy' : 'Lỗi'), !!j.success);
+    document.getElementById('dlg-order').close();
+    if (j.success) await window.loadView(currentView);
+  };
+
+  function toApiDateTime(dtLocal) {
+    if (!dtLocal) return null;
+    const s = dtLocal.replace('T', ' ');
+    return s.length === 16 ? s + ':00' : s;
+  }
+
+  window.submitSchedule = async function () {
+    const orderId = parseInt(document.getElementById('sch-order-id').value, 10);
+    const when = document.getElementById('sch-when').value;
+    const note = document.getElementById('sch-note').value;
+    const scheduledAt = toApiDateTime(when);
+    if (!scheduledAt) { toast('Chọn thời gian giao.', false); return; }
+    const body = { orderId: orderId, coordinatorId: me.id, scheduledAt: scheduledAt, note: note || null };
+    const r = await fetch(api('/api/supply-coordinator/deliveries/schedule'), {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const j = await r.json();
+    toast(j.message || (j.success ? 'Đã lập lịch' : 'Lỗi'), !!j.success);
+    document.getElementById('dlg-schedule').close();
+    if (j.success) await window.loadView(currentView);
+  };
+
+  window.submitDeliveryStatus = async function () {
+    const deliveryId = parseInt(document.getElementById('upd-delivery-id').value, 10);
+    const status = document.getElementById('upd-delivery-status').value;
+    const actualRaw = document.getElementById('upd-delivery-actual').value;
+    const note = document.getElementById('upd-delivery-note').value;
+    const body = { deliveryId: deliveryId, status: status, actualAt: actualRaw ? toApiDateTime(actualRaw) : null, note: note || null };
+    const r = await fetch(api('/api/supply-coordinator/deliveries/update-status'), {
+      method: 'PUT', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const j = await r.json();
+    toast(j.message || (j.success ? 'Đã cập nhật' : 'Lỗi'), !!j.success);
+    document.getElementById('dlg-delivery-status').close();
+    if (j.success) await window.loadView('deliveries');
+  };
+
+  document.getElementById('sc-tabs').addEventListener('click', function (e) {
+    const tab = e.target.closest('.sc-tab');
+    if (!tab) return;
+    window.loadView(tab.getAttribute('data-view'));
+  });
+
+  document.getElementById('sc-content').addEventListener('click', async function (ev) {
+    const btn = ev.target.closest('button[data-act]');
+    if (!btn) return;
+    const act = btn.getAttribute('data-act');
+    const id = parseInt(btn.getAttribute('data-id'), 10);
+    if (act === 'detail') { openOrderDialog(id); return; }
+    if (act === 'confirm') { await doConfirm(id); return; }
+    if (act === 'schedule') { openSchedule(id); return; }
+    if (act === 'cancel') { await doCancel(id); return; }
+    if (act === 'dst') {
+      document.getElementById('upd-delivery-id').value = id;
+      document.getElementById('upd-delivery-status').value = btn.getAttribute('data-next');
+      document.getElementById('upd-delivery-actual').value = '';
+      document.getElementById('upd-delivery-note').value = '';
+      document.getElementById('dlg-delivery-status').showModal();
+      return;
+    }
+    if (act === 'dfail') {
+      const reason = prompt('Lý do giao thất bại?', '');
+      if (reason === null) return;
+      const q = reason ? ('?reason=' + encodeURIComponent(reason)) : '';
+      const r = await fetch(api('/api/supply-coordinator/deliveries/' + id + '/failed') + q, { method: 'POST', credentials: 'same-origin' });
+      const j = await r.json();
+      toast(j.message || (j.success ? 'Đã cập nhật' : 'Lỗi'), !!j.success);
+      if (j.success) await window.loadView(currentView);
+    }
+  });
+
+  async function boot() {
+    const r = await fetch(api('/api/session/me'), { credentials: 'same-origin' });
+    if (r.status === 401) { window.location.href = api('/login'); return; }
+    me = await r.json();
+    if (me.role !== 'SUPPLY_COORDINATOR') { window.location.href = api('/dashboard'); return; }
+    document.getElementById('user-label').textContent = me.fullName + ' · #' + me.id;
+    document.getElementById('logout-link').href = api('/auth/logout');
+    await window.loadView('pending');
+  }
+
+  boot().catch(function (e) { setMsg('Lỗi khởi tạo: ' + e.message, true); });
+})();
+</script>
+</body>
+</html>

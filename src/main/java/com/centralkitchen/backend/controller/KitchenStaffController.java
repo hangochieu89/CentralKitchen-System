@@ -1,6 +1,7 @@
 package com.centralkitchen.backend.controller;
 
 import com.centralkitchen.backend.entity.Order;
+import com.centralkitchen.backend.entity.User;
 import com.centralkitchen.backend.service.KitchenStaffService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +26,10 @@ public class KitchenStaffController {
     private static final Logger log = LoggerFactory.getLogger(KitchenStaffController.class);
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model) {
+    public String dashboard(HttpSession session, Model model) {
+        User current = (User) session.getAttribute("currentUser");
+        model.addAttribute("currentUser", current);
+
         List<Order> orders = kitchenStaffService.getAllOrders();
         log.info("=== ORDERS COUNT: {} ===", orders.size());
         orders.forEach(o -> log.info("  Order #{} -> orderItems size: {}",

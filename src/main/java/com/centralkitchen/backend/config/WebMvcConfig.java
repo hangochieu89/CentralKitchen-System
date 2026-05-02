@@ -6,6 +6,7 @@ import org.apache.catalina.webresources.StandardRoot;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -13,6 +14,18 @@ import java.io.File;
 
 @Configuration
 public class WebMvcConfig implements WebServerFactoryCustomizer<TomcatServletWebServerFactory>, WebMvcConfigurer {
+
+    private final StaffRoleInterceptor staffRoleInterceptor;
+
+    public WebMvcConfig(StaffRoleInterceptor staffRoleInterceptor) {
+        this.staffRoleInterceptor = staffRoleInterceptor;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(staffRoleInterceptor)
+                .addPathPatterns("/api/supply-coordinator/**", "/kitchen-staff/**", "/api/store-staff/**");
+    }
 
     @Override
     public void customize(TomcatServletWebServerFactory factory) {

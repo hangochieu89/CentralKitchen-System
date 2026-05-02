@@ -186,7 +186,7 @@
                         <div class="icon-wrap"><i data-lucide="truck"></i></div>
                         <div class="info">
                             <span>Supply Coordinator</span>
-                            <small>Điều phối cung ứng</small>
+                            <small>Tổng hợp đơn franchise · xác nhận · lập lịch giao · xử lý sự cố</small>
                         </div>
                         <i data-lucide="chevron-right" class="icon-trail"></i>
                     </a>

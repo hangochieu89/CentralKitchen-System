@@ -1,5 +1,6 @@
 package com.centralkitchen.backend.config;
 
+import com.centralkitchen.backend.entity.User;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import org.springframework.stereotype.Component;
@@ -12,7 +13,8 @@ public class SessionFilter implements Filter {
     // Các URL không cần đăng nhập
     private static final List<String> PUBLIC_PATHS = List.of(
             "/login", "/auth/login", "/auth/logout",
-            "/css/", "/image/", "/js/"
+            "/css/", "/image/", "/js/",
+            "/error"
     );
 
     @Override
@@ -37,6 +39,20 @@ public class SessionFilter implements Filter {
         if (session == null || session.getAttribute("currentUser") == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
+        }
+
+        User user = (User) session.getAttribute("currentUser");
+        if (path.startsWith("/supply-coordinator/") && path.endsWith(".html")) {
+            if (!"SUPPLY_COORDINATOR".equals(user.getRole())) {
+                response.sendRedirect(request.getContextPath() + "/dashboard");
+                return;
+            }
+        }
+        if (path.startsWith("/store-staff/") && path.endsWith(".html")) {
+            if (!"STORE_STAFF".equals(user.getRole()) || user.getStore() == null) {
+                response.sendRedirect(request.getContextPath() + "/dashboard");
+                return;
+            }
         }
 
         chain.doFilter(req, res);

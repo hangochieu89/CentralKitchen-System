@@ -28,11 +28,38 @@ public class DashboardController {
     public String managerAdmin()      { return "redirect:/manager-admin/index.html"; }
 
     @GetMapping("/kitchen-staff")
-    public String kitchenStaff()      { return "redirect:/kitchen-staff/dashboard"; }
+    public String kitchenStaff(HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        if (user == null) {
+            return "redirect:/login";
+        }
+        if (!"KITCHEN_STAFF".equals(user.getRole())) {
+            return "redirect:/dashboard";
+        }
+        return "redirect:/kitchen-staff/dashboard";
+    }
 
     @GetMapping("/store-staff")
-    public String storeStaff()        { return "redirect:/store-staff/index.html"; }
+    public String storeStaff(HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        if (user == null) {
+            return "redirect:/login";
+        }
+        if (!"STORE_STAFF".equals(user.getRole()) || user.getStore() == null) {
+            return "redirect:/dashboard";
+        }
+        return "redirect:/store-staff/index.html";
+    }
 
     @GetMapping("/supply-coordinator")
-    public String supplyCoordinator() { return "redirect:/supply-coordinator/index.html"; }
+    public String supplyCoordinator(HttpSession session) {
+        User user = (User) session.getAttribute("currentUser");
+        if (user == null) {
+            return "redirect:/login";
+        }
+        if (!"SUPPLY_COORDINATOR".equals(user.getRole())) {
+            return "redirect:/dashboard";
+        }
+        return "redirect:/supply-coordinator/index.html";
+    }
 }
