@@ -148,7 +148,6 @@ public class AdminController {
         LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(6);
         List<Order> orders = orderRepository.findByOrderDateBetween(sevenDaysAgo, LocalDateTime.now());
 
-        // Group theo ngày
         Map<String, Long> result = new java.util.LinkedHashMap<>();
         for (int i = 6; i >= 0; i--) {
             String date = LocalDateTime.now().minusDays(i)
@@ -156,9 +155,12 @@ public class AdminController {
             result.put(date, 0L);
         }
         orders.forEach(o -> {
-            String date = o.getOrderDate()
-                    .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"));
-            result.merge(date, 1L, Long::sum);
+            // ← Thêm null check
+            if (o.getOrderDate() != null) {
+                String date = o.getOrderDate()
+                        .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"));
+                result.merge(date, 1L, Long::sum);
+            }
         });
         return ResponseEntity.ok(result);
     }
@@ -166,10 +168,33 @@ public class AdminController {
     @GetMapping("/dashboard/orders-by-status")
     public ResponseEntity<?> getOrdersByStatus() {
         List<Order> all = orderRepository.findAll();
+
+        // Dịch sang tiếng Việt luôn
         Map<String, Long> result = new java.util.LinkedHashMap<>();
-        String[] statuses = {"PENDING","CONFIRMED","IN_PRODUCTION","READY","DELIVERING","DELIVERED","CANCELLED"};
-        for (String s : statuses) result.put(s, 0L);
-        all.forEach(o -> result.merge(o.getStatus(), 1L, Long::sum));
+        result.put("Chờ duyệt",       0L);
+        result.put("Đã xác nhận",     0L);
+        result.put("Đang sản xuất",   0L);
+        result.put("Sẵn sàng",        0L);
+        result.put("Đang giao",       0L);
+        result.put("Đã giao",         0L);
+        result.put("Đã hủy",          0L);
+
+        Map<String, String> translate = Map.of(
+                "PENDING",       "Chờ duyệt",
+                "CONFIRMED",     "Đã xác nhận",
+                "IN_PRODUCTION", "Đang sản xuất",
+                "READY",         "Sẵn sàng",
+                "DELIVERING",    "Đang giao",
+                "DELIVERED",     "Đã giao",
+                "CANCELLED",     "Đã hủy"
+        );
+
+        all.forEach(o -> {
+            if (o.getStatus() != null) {
+                String label = translate.getOrDefault(o.getStatus(), o.getStatus());
+                result.merge(label, 1L, Long::sum);
+            }
+        });
         return ResponseEntity.ok(result);
     }
 
@@ -178,10 +203,11 @@ public class AdminController {
         List<Order> all = orderRepository.findAll();
         Map<String, Long> result = new java.util.LinkedHashMap<>();
         all.forEach(o -> {
-            String name = o.getStore().getName();
-            result.merge(name, 1L, Long::sum);
+            // ← Thêm null check ở đây
+            if (o.getStore() != null && o.getStore().getName() != null) {
+                result.merge(o.getStore().getName(), 1L, Long::sum);
+            }
         });
-        // Sort giảm dần
         return ResponseEntity.ok(
                 result.entrySet().stream()
                         .sorted(Map.Entry.<String,Long>comparingByValue().reversed())

@@ -10,6 +10,7 @@ Hệ thống quản lý Bếp Trung Tâm và Chuỗi Cửa Hàng Franchise.
 - Frontend: HTML, CSS, JavaScript (thuần)
 
 ## Cấu trúc project
+
 ```
 CentralKitchen-System/
 │
@@ -21,12 +22,13 @@ CentralKitchen-System/
 │   └── store-staff/
 │
 └── src/main/java/com/centralkitchen/backend/
-├── controller/
-├── dto/
-├── entity/
-├── repository/
-└── service/
+    ├── controller/
+    ├── dto/
+    ├── entity/
+    ├── repository/
+    └── service/
 ```
+
 ## Hướng dẫn cài đặt
 
 ### Yêu cầu
@@ -38,39 +40,49 @@ CentralKitchen-System/
 
 ### Các bước chạy
 
-1. Tạo database
-- Mở SQL Server Management Studio (SSMS)
-- Chạy file: database/database.sql
+1. **Tạo database**
+    - Mở SQL Server Management Studio (SSMS)
+    - Chạy file: `database/database.sql`
 
-2. Cấu hình kết nối
+2. **Cập nhật schema** _(chạy sau khi tạo database)_
+    - Mở SSMS, chạy thêm câu lệnh sau để thêm cột hỗ trợ xác nhận nhận hàng:
+   ```sql
+   ALTER TABLE dbo.orders
+   ADD store_receipt_confirmed_at DATETIME NULL;
+   ```
 
-Mở file:  
-src/main/resources/application.properties
+3. **Cấu hình kết nối**
 
-Cập nhật:
+   Mở file: `src/main/resources/application.properties`
 
-spring.datasource.username=your_username  
-spring.datasource.password=your_password  
-spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=CentralKitchenDB
+   Cập nhật:
+   ```properties
+   spring.datasource.username=your_username
+   spring.datasource.password=your_password
+   spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=CentralKitchenDB
+   ```
 
-3. Chạy ứng dụng
+4. **Chạy ứng dụng**
 
-Cách 1: IntelliJ
-- Chạy file CentralKitchenSystemApplication.java
+   Cách 1 — IntelliJ: chạy file `CentralKitchenSystemApplication.java`
 
-Cách 2: Terminal  
-mvn spring-boot:run
+   Cách 2 — Terminal:
+   ```bash
+   mvn spring-boot:run
+   ```
 
-4. Truy cập API
+5. **Truy cập**
 
-http://localhost:8080
+   ```
+   http://localhost:8080
+   ```
 
 ## Phân công nhóm
 
-| Thành viên     | Vai trò |
-|----------------|--------|
-| Hà Ngọc Hiếu   | Admin - Quản trị hệ thống & phân quyền |
-| Phan Thành An  | Supply Coordinator - Điều phối cung ứng |
-| Trần Bảo       | Manager - Quản lý vận hành |
-| Đình Phát      | Central Kitchen Staff - Nhân viên bếp trung tâm |
-| Lê Khắc Huy    | Franchise Store Staff - Nhân viên cửa hàng |
+| Thành viên    | Vai trò                                        |
+|---------------|------------------------------------------------|
+| Hà Ngọc Hiếu  | Admin — Quản trị hệ thống & phân quyền         |
+| Phan Thành An | Supply Coordinator — Điều phối cung ứng        |
+| Trần Bảo      | Manager — Quản lý vận hành                     |
+| Đình Phát     | Central Kitchen Staff — Nhân viên bếp trung tâm|
+| Lê Khắc Huy   | Franchise Store Staff — Nhân viên cửa hàng     |

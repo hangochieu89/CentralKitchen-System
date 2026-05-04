@@ -621,6 +621,17 @@
       return `<div class="es"><div class="es-icon"><i data-lucide="${iconName}"></i></div><div class="et">${msg}</div></div>`;
     }
 
+    const STATUS_LABELS = {
+      PENDING:    'Chờ duyệt',
+      CONFIRMED:  'Đã xác nhận',
+      PREPARING:  'Đang chuẩn bị',
+      READY:      'Sẵn sàng',
+      DELIVERING: 'Đang giao',
+      DELIVERED:  'Đã giao',
+      CANCELLED:  'Đã hủy',
+      // Thêm các trạng thái khác nếu có
+    };
+
     // ══════ DASHBOARD ══════
     async function loadDashboard(){
       loadStats();loadChartOrdersDay();loadChartOrdersStatus();loadTopStores();loadLowStock();
@@ -645,7 +656,8 @@
     async function loadChartOrdersStatus(){
       try{
         const r=await fetch(API+'/dashboard/orders-by-status');const d=await r.json();
-        const labels=Object.keys(d);const values=Object.values(d);
+        const labels=Object.keys(d).map(k => STATUS_LABELS[k] || k);
+        const values=Object.values(d);
         const colors=['#f59e0b','#3b82f6','#6366f1','#14b8a6','#8b5cf6','#22c55e','#ef4444'];
         if(chartStatus)chartStatus.destroy();
         const ctx=document.getElementById('chart-orders-status').getContext('2d');
