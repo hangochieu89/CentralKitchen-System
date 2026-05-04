@@ -13,6 +13,8 @@ import com.centralkitchen.backend.service.StoreStaffService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -189,4 +191,25 @@ public class StoreStaffController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
+
+    @PostMapping("/orders")
+    public ResponseEntity<?> createOrder(@RequestBody OrderRequest request, HttpSession session) {
+        User staff = (User) session.getAttribute("currentUser");
+        Order newOrder = storeStaffService.createOrder(request, staff);
+        return ResponseEntity.ok(Map.of("success", true, "orderId", newOrder.getId()));
+    }
+
+    // Xác nhận nhận hàng thành công (Cộng kho tự động)
+    @PostMapping("/orders/{orderId}/confirm-receipt")
+    public ResponseEntity<?> confirmReceipt(@PathVariable Integer orderId, HttpSession session) {
+        User staff = (User) session.getAttribute("currentUser");
+        try {
+            Order confirmed = storeStaffService.confirmReceipt(orderId, staff);
+            return ResponseEntity.ok(Map.of("success", true, "confirmedAt", confirmed.getStoreReceiptConfirmedAt()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+
 }
