@@ -409,4 +409,30 @@ public class StoreStaffService {
                 .khac(khac)
                 .build();
     }
+
+    @Transactional
+    public List<Inventory> applyStocktake1(Integer storeId, StoreStocktakeRequest body, User staff) {
+        assertOwnStore(staff, storeId);
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay cua hang."));
+                
+        List<Inventory> saved = new ArrayList<>();
+        for (StoreStocktakeRequest.StoreStocktakeLineRequest line : body.getLines()) {
+            Inventory inv = inventoryRepository.findByStoreIdAndProductId(storeId, line.getProductId())
+                    .orElse(Inventory.builder()
+                            .store(store)
+                            .product(productRepository.findById(line.getProductId()).get())
+                            .quantity(0.0)
+                            .minThreshold(0.0)
+                            .build());
+            
+            // Cập nhật số lượng đếm được thực tế
+            inv.setQuantity(line.getCountedQuantity());
+            if (line.getMinThreshold() != null) inv.setMinThreshold(line.getMinThreshold());
+            inv.setUpdatedAt(LocalDateTime.now());
+            saved.add(inventoryRepository.save(inv));
+        }
+        return saved;
+    }
+
 }
